@@ -71,10 +71,13 @@ if __name__ == '__main__':
     best_loss = None
     val_acc_list, net_list = [], []
 
+    if args.testing > 0:
+        testacc = []
+
     if args.all_clients: 
         print("Aggregation over all clients")
         w_locals = [w_glob for i in range(args.num_users)]
-    for iter in range(args.epochs):
+    for iter in range(1,args.epochs+1):
         loss_locals = []
         if not args.all_clients:
             w_locals = []
@@ -98,6 +101,16 @@ if __name__ == '__main__':
         loss_avg = sum(loss_locals) / len(loss_locals)
         print('Round {:3d}, Average loss {:.3f}'.format(iter, loss_avg))
         loss_train.append(loss_avg)
+
+        # test the model
+        if iter > 0 and iter % args.testing == 0 and args.testing > 0:
+            net_glob.eval()
+            acc_test, loss_test = test_img(net_glob, dataset_test, args)
+            print("Testing accuracy: {:.2f}".format(acc_test))
+            net_glob.train()
+
+            testacc.append((iter,acc_test))
+
 
     # plot loss curve
     plt.figure()

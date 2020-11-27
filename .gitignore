@@ -49,3 +49,5 @@ wheels/
 venv/
 ENV/
 
+data
+save

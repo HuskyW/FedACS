@@ -37,5 +37,9 @@ def args_parser():
     parser.add_argument('--verbose', action='store_true', help='verbose print')
     parser.add_argument('--seed', type=int, default=1, help='random seed (default: 1)')
     parser.add_argument('--all_clients', action='store_true', help='aggregation over all clients')
+
+    # modified
+    parser.add_argument('--testing', type=int, default=-1, help="test the model after some rounds, -1: never")
+
     args = parser.parse_args()
     return args
