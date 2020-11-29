@@ -45,6 +45,8 @@ if __name__ == '__main__':
         exit('Error: unrecognized dataset')
     img_size = dataset_train[0][0].shape
 
+    print(args.iid)
+
     # build model
     if args.model == 'cnn' and args.dataset == 'cifar':
         net_glob = CNNCifar(args=args).to(args.device)
@@ -109,8 +111,12 @@ if __name__ == '__main__':
             print("Testing accuracy: {:.2f}".format(acc_test))
             net_glob.train()
 
-            testacc.append((iter,acc_test))
+            testacc.append((iter,float(acc_test)))
 
+    with open("log.txt",'w') as fp:
+        for i in range(len(testacc)):
+            content = str(testacc[i][0]) + ' ' + str(testacc[i][1]) + '\n'
+            fp.write(content)
 
     # plot loss curve
     plt.figure()
