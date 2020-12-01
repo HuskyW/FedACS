@@ -97,7 +97,7 @@ if __name__ == '__main__':
         if iter == 1:
             w_glob = FedAvg(w_locals)
         else:
-            w_glob = FedAvgWithCmfl(w_locals,w_old,mute=False)
+            w_glob = FedAvgWithCmfl(w_locals,w_old,threshold=0.7,mute=False)
 
         w_old = w_glob
         # copy weight to net_glob
