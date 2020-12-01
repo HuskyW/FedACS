@@ -47,6 +47,53 @@ def mnist_noniid(dataset, num_users):
             dict_users[i] = np.concatenate((dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
     return dict_users
 
+def mnist_merged_iid(dataset, num_users):
+    data_per_node = 300
+    data_num = 60000
+    class_num = 10
+    class_size = int(data_num/class_num)
+    data_per_nc = int(data_per_node / class_num)
+
+    dict_users = {i: np.array([], dtype='int64') for i in range(num_users)}
+    idxs = np.arange(data_num)
+    labels = dataset.train_labels.numpy()
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    iidRatio = 0.7
+    iid_users = int(num_users * iidRatio)
+    noniid_users = num_users - iid_users
+
+    # iid nodes
+    for i in range(iid_users):
+        for c in range(class_num):
+            dict_users[i] = np.concatenate((dict_users[i], idxs[class_size*c+data_per_nc*i:class_size*c+data_per_nc*(i+1)]), axis=0)
+
+    # non-iid nodes
+    node_per_class = int(noniid_users / 3)
+    for c in range(3):
+        for i in range(node_per_class):
+            nodeid = iid_users + c * node_per_class + i
+            rand = np.random.randint(class_size - data_per_node)
+            datastart = c*class_size + rand
+            dict_users[nodeid] = np.concatenate((dict_users[nodeid], idxs[datastart:datastart+data_per_node]), axis=0)
+    return dict_users
+
+def spell_partition_mnist(partition, labels):
+    for nodeid, dataid in partition.items():
+        record = [0] * 10
+        for data in dataid:
+            label = labels[data]
+            record[label] += 1
+        
+        print("Client %d", nodeid)
+        for classid in range(len(record)):
+            print("Class %d: %d" %(classid,record[classid]))
+        print("\n\n")
+
 
 def cifar_iid(dataset, num_users):
     """
@@ -70,4 +117,5 @@ if __name__ == '__main__':
                                        transforms.Normalize((0.1307,), (0.3081,))
                                    ]))
     num = 100
-    d = mnist_noniid(dataset_train, num)
+    d = mnist_merged_iid(dataset_train, num)
+    spell_partition_mnist(d,dataset_train.train_labels.numpy())

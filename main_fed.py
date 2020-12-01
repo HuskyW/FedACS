@@ -10,7 +10,7 @@ import numpy as np
 from torchvision import datasets, transforms
 import torch
 
-from utils.sampling import mnist_iid, mnist_noniid, cifar_iid
+from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -29,15 +29,19 @@ if __name__ == '__main__':
         dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True, transform=trans_mnist)
         dataset_test = datasets.MNIST('../data/mnist/', train=False, download=True, transform=trans_mnist)
         # sample users
-        if args.iid:
+        if args.iid == 0:
             dict_users = mnist_iid(dataset_train, args.num_users)
-        else:
+        elif args.iid == 1:
             dict_users = mnist_noniid(dataset_train, args.num_users)
+        elif args.iid == 2:
+            dict_users = mnist_merged_iid(dataset_train, args.num_users)
+        else:
+            exit("Bad argument: iid")
     elif args.dataset == 'cifar':
         trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
-        if args.iid:
+        if args.iid == 0:
             dict_users = cifar_iid(dataset_train, args.num_users)
         else:
             exit('Error: only consider IID setting in CIFAR10')
