@@ -6,6 +6,7 @@ import copy
 import torch
 from torch import nn
 from numpy import sign,ravel
+import numpy as np
 
 
 def FedAvg(w):
@@ -50,6 +51,68 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True):
     if mute == False:
         print("CMFL: %d out of %d is accepted" % (len(w_agree),len(w)))
     return w_avg
+
+
+def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True):
+
+    boostingThres = avg_l2 * 1
+    cuttingThres = avg_l2 * 2
+
+    if w_old is None: # 1st iter
+        w_delta = w
+    else:
+        w_delta = DeltaWeights(w,w_old)
+
+    w_davg = FedAvg(w_delta)
+    l2norms = [0] * len(w)
+    for k in w_davg.keys():
+        avlist = w_davg[k].numpy().reshape(-1)
+        for i in range(len(w)):
+            ilist = w_delta[i][k].numpy().reshape(-1)
+            diff = avlist - ilist
+            l2norms[i] += np.linalg.norm(diff,ord=2)
+
+    new_avg_l2 = np.mean(l2norms)
+
+    if w_old is None:
+        return w_davg, new_avg_l2
+
+    w_dapproved = []
+    if cutting:
+        for i in range(len(w)):
+            if l2norms[i] < cuttingThres:
+                w_dapproved.append(w_delta[i])
+        if mute == False:
+            print("L2: %d out of %d accepted" % (len(w_dapproved),len(w)))
+
+        if len(w_dapproved) == 0:
+            minl2index = l2norms.index(min(l2norms))
+            w_dapproved.append(w_delta[minl2index])
+
+    else:
+        w_dapproved = w_delta
+        
+    w_davg = FedAvg(w_dapproved)
+    boostcountThres = 0.7
+    
+    if boosting:
+        boostCount = 0
+        for i in range(len(w)):
+            if l2norms[i] < boostingThres:
+                boostCount += 1
+        
+        if boostCount >= int(len(w) * boostcountThres):
+            for k in w_davg.keys():
+                torch.mul(w_davg[k],3)
+            if mute == False:
+                print("L2: Boosting activated (%d/%d)" % (boostCount, int(len(w) * boostcountThres)))
+        elif mute == False:
+            print("L2: Boosting failed (%d/%d)" % (boostCount, int(len(w) * boostcountThres)))
+    
+    for k in w_davg.keys():
+        w_davg[k] += w_old[k]
+
+    return w_davg, new_avg_l2
     
 def DeltaWeights(w,w_old):
     deltas = copy.deepcopy(w)

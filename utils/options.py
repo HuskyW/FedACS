@@ -41,5 +41,7 @@ def args_parser():
     # modified
     parser.add_argument('--testing', type=int, default=-1, help="test the model after some rounds, -1: never")
 
+    parser.add_argument('--mode', type=int, default=0, help="Mode, 0:vanilla, 1:CMFL, 2:L2norm")
+
     args = parser.parse_args()
     return args

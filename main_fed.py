@@ -14,7 +14,7 @@ from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
-from models.Fed import FedAvg, FedAvgWithCmfl
+from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
 from models.test import test_img
 
 
@@ -22,6 +22,9 @@ if __name__ == '__main__':
     # parse args
     args = args_parser()
     args.device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() and args.gpu != -1 else 'cpu')
+
+    # seed
+    np.random.seed(args.seed)
 
     # load dataset and split users
     if args.dataset == 'mnist':
@@ -48,8 +51,6 @@ if __name__ == '__main__':
     else:
         exit('Error: unrecognized dataset')
     img_size = dataset_train[0][0].shape
-
-    print(args.iid)
 
     # build model
     if args.model == 'cnn' and args.dataset == 'cifar':
@@ -98,33 +99,47 @@ if __name__ == '__main__':
                 w_locals.append(copy.deepcopy(w))
             loss_locals.append(copy.deepcopy(loss))
         # update global weights
-        if iter == 1:
+        if args.mode == 0:
             w_glob = FedAvg(w_locals)
+
+
+        elif args.mode == 1:
+            if iter == 1:
+                w_glob = FedAvg(w_locals)
+            else:
+                w_glob = FedAvgWithCmfl(w_locals,w_old,threshold=0.7,mute=False)
+
+
+        elif args.mode == 2:
+            if iter == 1:
+                w_glob,avgl2 = FedAvgWithL2(w_locals,None,0,boosting=False,cutting=False,mute=False)
+                l2_record = avgl2
+            else:
+                w_glob,avgl2 = FedAvgWithL2(w_locals,w_old,l2_record,boosting=True,cutting=True,mute=False)
+                l2_record = l2_record * 0.8 + avgl2 * 0.2
+
         else:
-            w_glob = FedAvgWithCmfl(w_locals,w_old,threshold=0.7,mute=False)
+            exit('Bad argument: mode')
 
         w_old = w_glob
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
 
-        # print loss
-        loss_avg = sum(loss_locals) / len(loss_locals)
-        print('Round {:3d}, Average loss {:.3f}'.format(iter, loss_avg))
-        loss_train.append(loss_avg)
 
         # test the model
         if iter > 0 and iter % args.testing == 0 and args.testing > 0:
             net_glob.eval()
             acc_test, loss_test = test_img(net_glob, dataset_test, args)
-            print("Testing accuracy: {:.2f}".format(acc_test))
+            print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
             net_glob.train()
 
             testacc.append((iter,float(acc_test)))
 
     with open("log.txt",'w') as fp:
         for i in range(len(testacc)):
-            content = str(testacc[i][0]) + ' ' + str(testacc[i][1]) + '\n'
+            content = str(testacc[i][1]) + '\n'
             fp.write(content)
+        print('Log written')
 
     # plot loss curve
     plt.figure()
@@ -132,10 +147,11 @@ if __name__ == '__main__':
     plt.ylabel('train_loss')
     plt.savefig('./save/fed_{}_{}_{}_C{}_iid{}.png'.format(args.dataset, args.model, args.epochs, args.frac, args.iid))
 
+    '''
     # testing
     net_glob.eval()
     acc_train, loss_train = test_img(net_glob, dataset_train, args)
     acc_test, loss_test = test_img(net_glob, dataset_test, args)
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
-
+    '''
