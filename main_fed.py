@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 w_glob,avgl2 = FedAvgWithL2(w_locals,None,0,boosting=False,cutting=False,mute=False)
                 l2_record = avgl2
             else:
-                w_glob,avgl2 = FedAvgWithL2(w_locals,w_old,l2_record,boosting=True,cutting=True,mute=False)
+                w_glob,avgl2 = FedAvgWithL2(w_locals,w_old,l2_record,boosting=True,cutting=True,mute=False,checking=(idxs_users,70))
                 l2_record = l2_record * 0.8 + avgl2 * 0.2
 
         else:
@@ -141,13 +141,14 @@ if __name__ == '__main__':
             fp.write(content)
         print('Log written')
 
+    '''
     # plot loss curve
     plt.figure()
     plt.plot(range(len(loss_train)), loss_train)
     plt.ylabel('train_loss')
     plt.savefig('./save/fed_{}_{}_{}_C{}_iid{}.png'.format(args.dataset, args.model, args.epochs, args.frac, args.iid))
 
-    '''
+    
     # testing
     net_glob.eval()
     acc_train, loss_train = test_img(net_glob, dataset_train, args)

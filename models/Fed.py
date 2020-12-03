@@ -53,10 +53,11 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True):
     return w_avg
 
 
-def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True):
+def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True,checking=None):
 
     boostingThres = avg_l2 * 1
-    cuttingThres = avg_l2 * 2
+    cuttingThres = avg_l2 * 1.2
+    boostcountThres = 0.8
 
     if w_old is None: # 1st iter
         w_delta = w
@@ -93,7 +94,6 @@ def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True):
         w_dapproved = w_delta
         
     w_davg = FedAvg(w_dapproved)
-    boostcountThres = 0.7
     
     if boosting:
         boostCount = 0
@@ -112,7 +112,33 @@ def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True):
     for k in w_davg.keys():
         w_davg[k] += w_old[k]
 
+    if checking is not None:
+        clientId = checking[0].copy()
+        iidThreshold = checking[1]
+
+        if cutting is True:
+            rec = [0] * 4
+            for i in range(len(clientId)):
+                check = 0
+                if clientId[i] >= iidThreshold: # nIID
+                    check += 2
+                if l2norms[i] > cuttingThres: #killed
+                    check += 1
+                rec[check] += 1
+            print("Cutting : IID (%2d/%2d), non (%2d/%2d)" %tuple(rec))
+        if boosting is True:
+            rec = [0] * 4
+            for i in range(len(clientId)):
+                check = 0
+                if clientId[i] >= iidThreshold: # nIID
+                    check += 2
+                if l2norms[i] < boostingThres: #killed
+                    check += 1
+                rec[check] += 1
+            print("Boosting: IID (%2d/%2d), non (%2d/%2d)" %tuple(rec))
+
     return w_davg, new_avg_l2
+
     
 def DeltaWeights(w,w_old):
     deltas = copy.deepcopy(w)
