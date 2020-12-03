@@ -17,7 +17,7 @@ def FedAvg(w):
         w_avg[k] = torch.div(w_avg[k], len(w))
     return w_avg
 
-def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True):
+def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True,checking=None):
     w_delta = DeltaWeights(w,w_old)
     w_davg = FedAvg(w_delta)
     agreeThres = 0
@@ -29,6 +29,8 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True):
 
     maxagree = 0
     maxindex = 0
+
+    checklist = [False] * len(w_delta)
     
     for i in range(len(w_delta)):
         agreeCount = 0
@@ -40,6 +42,7 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True):
                     agreeCount += 1
         if agreeCount >= agreeThres:
             w_agree.append(w[i])
+            checklist[i] = True
         if maxagree < agreeCount:
             maxagree = agreeCount
             maxindex = i
@@ -48,7 +51,21 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True):
     else:
         w_avg = w[maxindex]
 
-    if mute == False:
+    if checking is not None:
+        clientId = checking[0].copy()
+        iidThreshold = checking[1]
+        rec = [0] * 4
+        for i in range(len(clientId)):
+            check = 0
+            if clientId[i] >= iidThreshold: # nIID
+                check += 2
+            if checklist[i] is False: #killed
+                check += 1
+            rec[check] += 1
+        print("Cutting : IID (%2d/%2d), non (%2d/%2d)" %tuple(rec))
+        
+
+    if mute == False and checking is None:
         print("CMFL: %d out of %d is accepted" % (len(w_agree),len(w)))
     return w_avg
 
