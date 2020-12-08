@@ -17,6 +17,8 @@ from models.Nets import MLP, CNNMnist, CNNCifar
 from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
 from models.test import test_img
 
+import utils.evaluate as evaluate
+
 
 if __name__ == '__main__':
     # parse args
@@ -101,6 +103,8 @@ if __name__ == '__main__':
         # update global weights
         if args.mode == 0:
             w_glob = FedAvg(w_locals)
+            if iter > 1:
+                evaluate.deltaWeightEvaluate(w_glob,w_old)
 
 
         elif args.mode == 1:
