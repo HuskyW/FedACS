@@ -22,7 +22,7 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True,checking=None):
     w_davg = FedAvg(w_delta)
     agreeThres = 0
     for k in w_davg.keys():
-        templist = w_davg[k].numpy().reshape(-1)
+        templist = w_davg[k].cpu().numpy().reshape(-1)
         agreeThres += len(templist)
     agreeThres *= threshold
     w_agree = []
@@ -35,8 +35,8 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True,checking=None):
     for i in range(len(w_delta)):
         agreeCount = 0
         for k in w_davg.keys():
-            templist1 = w_davg[k].numpy().reshape(-1)
-            templist2 = w_delta[i][k].numpy().reshape(-1)
+            templist1 = w_davg[k].cpu().numpy().reshape(-1)
+            templist2 = w_delta[i][k].cpu().numpy().reshape(-1)
             for j in range(len(templist1)):
                 if sign(templist1[j]) == sign(templist2[j]):
                     agreeCount += 1
@@ -84,9 +84,9 @@ def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True,checking=
     w_davg = FedAvg(w_delta)
     l2norms = [0] * len(w)
     for k in w_davg.keys():
-        avlist = w_davg[k].numpy().reshape(-1)
+        avlist = w_davg[k].cpu().numpy().reshape(-1)
         for i in range(len(w)):
-            ilist = w_delta[i][k].numpy().reshape(-1)
+            ilist = w_delta[i][k].cpu().numpy().reshape(-1)
             diff = avlist - ilist
             l2norms[i] += np.linalg.norm(diff,ord=2)
 
