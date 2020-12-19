@@ -31,3 +31,22 @@ def deltaWeightEvaluate(w,w_old):
 
     print("max: %.4f, min: %.4f, avg: %.4f, std: %.4f" % (wmax,wmin,wavg,wstd))
     print("range: %.4f, IQR: %.4f, IQR/range: %.4f, std/range:  %.4f" % (wmax-wmin , q3-q1 , (q3-q1)/(wmax-wmin) , wstd/(wmax-wmin)))
+
+
+def l2NormEvaluate(w_old,w):
+    if w_old is None: # 1st iter
+        w_delta = w
+    else:
+        w_delta = Fed.DeltaWeights(w,w_old)
+
+    w_davg = Fed.FedAvg(w_delta)
+
+    l2norms = [0] * len(w)
+    for k in w_davg.keys():
+        avlist = w_davg[k].cpu().numpy().reshape(-1)
+        for i in range(len(w)):
+            ilist = w_delta[i][k].cpu().numpy().reshape(-1)
+            diff = avlist - ilist
+            l2norms[i] += np.linalg.norm(diff,ord=2)
+
+    return l2norms

@@ -7,8 +7,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import copy
 import numpy as np
+import pandas as pd
 from torchvision import datasets, transforms
 import torch
+import openpyxl
 
 from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid
 from utils.options import args_parser
@@ -83,6 +85,8 @@ if __name__ == '__main__':
     if args.testing > 0:
         testacc = []
 
+    l2eval = np.zeros((args.epochs-1,10))
+
     if args.all_clients: 
         print("Aggregation over all clients")
         w_locals = [w_glob for i in range(args.num_users)]
@@ -91,7 +95,8 @@ if __name__ == '__main__':
         if not args.all_clients:
             w_locals = []
         m = max(int(args.frac * args.num_users), 1)
-        idxs_users = np.random.choice(range(args.num_users), m, replace=False)
+        #idxs_users = np.random.choice(range(args.num_users), m, replace=False)
+        idxs_users = [0,1,2,3,4,5,6,75,85,95]
         for idx in idxs_users:
             local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
@@ -103,9 +108,11 @@ if __name__ == '__main__':
         # update global weights
         if args.mode == 0:
             w_glob = FedAvg(w_locals)
-            if iter > 1:
-                evaluate.deltaWeightEvaluate(w_glob,w_old)
 
+            if iter != 1:
+                l2n = evaluate.l2NormEvaluate(w_old,w_locals)
+                for i in range(len(idxs_users)):
+                    l2eval[iter-2][i] = l2n[i]
 
         elif args.mode == 1:
             if iter == 1:
@@ -139,11 +146,20 @@ if __name__ == '__main__':
 
             testacc.append((iter,float(acc_test)))
 
+    
+
     with open("log.txt",'w') as fp:
         for i in range(len(testacc)):
             content = str(testacc[i][1]) + '\n'
             fp.write(content)
         print('Log written')
+
+
+    writer = pd.ExcelWriter('l2eval.xlsx')
+    l2pandas = pd.DataFrame(l2eval)
+    l2pandas.to_excel(writer, 'sheet_1', float_format='%f')
+    writer.save()
+    writer.close()
 
     '''
     # plot loss curve
