@@ -12,7 +12,7 @@ from torchvision import datasets, transforms
 import torch
 import openpyxl
 
-from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid
+from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid, mnist_50_50_iid
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -42,6 +42,8 @@ if __name__ == '__main__':
             dict_users = mnist_noniid(dataset_train, args.num_users)
         elif args.iid == 2:
             dict_users = mnist_merged_iid(dataset_train, args.num_users)
+        elif args.iid == 3:
+            dict_users = mnist_50_50_iid(dataset_train, args.num_users)
         else:
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
@@ -85,7 +87,8 @@ if __name__ == '__main__':
     if args.testing > 0:
         testacc = []
 
-    l2eval = np.zeros((args.epochs-1,10))
+    l2eval = np.ones((args.epochs-1,args.num_users))
+    l2eval = l2eval*-1
 
     if args.all_clients: 
         print("Aggregation over all clients")
@@ -95,8 +98,7 @@ if __name__ == '__main__':
         if not args.all_clients:
             w_locals = []
         m = max(int(args.frac * args.num_users), 1)
-        #idxs_users = np.random.choice(range(args.num_users), m, replace=False)
-        idxs_users = [0,1,2,3,4,5,6,75,85,95]
+        idxs_users = np.random.choice(range(args.num_users), m, replace=False)
         for idx in idxs_users:
             local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
@@ -112,7 +114,8 @@ if __name__ == '__main__':
             if iter != 1:
                 l2n = evaluate.l2NormEvaluate(w_old,w_locals)
                 for i in range(len(idxs_users)):
-                    l2eval[iter-2][i] = l2n[i]
+                    clientidx = idxs_users[i]
+                    l2eval[iter-2][clientidx] = l2n[i]
 
         elif args.mode == 1:
             if iter == 1:
@@ -160,6 +163,7 @@ if __name__ == '__main__':
     l2pandas.to_excel(writer, 'sheet_1', float_format='%f')
     writer.save()
     writer.close()
+    print('L2 record written')
 
     '''
     # plot loss curve

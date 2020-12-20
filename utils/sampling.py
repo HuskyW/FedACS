@@ -82,6 +82,46 @@ def mnist_merged_iid(dataset, num_users):
             dict_users[nodeid] = np.concatenate((dict_users[nodeid], idxs[datastart:datastart+data_per_node]), axis=0)
     return dict_users
 
+def mnist_50_50_iid(dataset, num_users=100):
+    data_per_node = 300
+    data_num = 60000
+    class_num = 10
+    class_size = int(data_num/class_num)
+    data_per_nc = int(data_per_node / class_num)
+
+    dict_users = {i: np.array([], dtype='int64') for i in range(num_users)}
+    idxs = np.arange(data_num)
+    labels = dataset.train_labels.numpy()
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    head = [0] * 10
+
+    iid_users = 50
+    noniid_users = 50
+    noniid_perclass = int(noniid_users / class_num)
+
+    # iid nodes
+    perclass_size = int(data_per_node/class_num)
+    for i in range(iid_users):
+        for c in range(class_num):
+            dict_users[i] = np.concatenate((dict_users[i], idxs[class_size*c+head[c] : class_size*c+head[c]+perclass_size]), axis=0)
+            head[c] += perclass_size
+            head[c] = head[c] % class_size
+
+    # non-iid nodes
+    node_per_class = int(noniid_users / class_num)
+    for c in range(class_num):
+        for i in range(node_per_class):
+            nodeid = iid_users + c * node_per_class + i
+            dict_users[nodeid] = np.concatenate((dict_users[nodeid], idxs[class_size*c+head[c]:class_size*c+head[c]+data_per_node]), axis=0)
+            head[c] += data_per_node
+            head[c] = head[c] % class_size
+    return dict_users
+
 def spell_partition_mnist(partition, labels):
     for nodeid, dataid in partition.items():
         record = [0] * 10
@@ -117,5 +157,5 @@ if __name__ == '__main__':
                                        transforms.Normalize((0.1307,), (0.3081,))
                                    ]))
     num = 100
-    d = mnist_merged_iid(dataset_train, num)
+    d = mnist_50_50_iid(dataset_train, num)
     spell_partition_mnist(d,dataset_train.train_labels.numpy())
