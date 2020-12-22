@@ -8,7 +8,7 @@ def estimateBounds(dataset,idxs,args,net,two_bounds=False):
     lower = {}
 
     for i in range(len(idxs)):
-        newsample = np.ones(1)
+        newsample = np.ones(1,dtype='int')
         newsample[0] = idxs[i]
 
         margs = deepcopy(args)
@@ -24,9 +24,8 @@ def estimateBounds(dataset,idxs,args,net,two_bounds=False):
                 upper[k] = deepcopy(wklist)
                 lower[k] = deepcopy(wklist)
             
-            combined = np.vstack((upper[k],wklist))
+            combined = np.vstack((upper[k],wklist,lower[k]))
             upper[k] = np.amax(combined,axis=0)
-            combined = np.vstack((lower[k],wklist))
             lower[k] = np.amin(combined,axis=0)
     
     if two_bounds is True:
@@ -34,5 +33,9 @@ def estimateBounds(dataset,idxs,args,net,two_bounds=False):
     
     for k in upper.keys():
         upper[k] = upper[k] - lower[k]
+        for i in range(len(upper[k])):
+            if upper[k][i] == 0.0:
+                upper[k][i] = 100000
+
 
     return upper

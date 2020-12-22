@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # Python version: 3.6
 
-
+import random
 import numpy as np
 from torchvision import datasets, transforms
+from math import floor
 
 def mnist_iid(dataset, num_users):
     """
@@ -122,14 +123,18 @@ def mnist_50_50_iid(dataset, num_users=100):
             head[c] = head[c] % class_size
     return dict_users
 
-def spell_partition_mnist(partition, labels):
+def spell_partition_mnist(partition, labels,dominence=None):
+
     for nodeid, dataid in partition.items():
         record = [0] * 10
         for data in dataid:
             label = labels[data]
             record[label] += 1
         
-        print("Client %d", nodeid)
+        print("Client %d"% nodeid)
+        if dominence is not None:
+            print("Dominence: %.2f"% dominence[nodeid])
+
         for classid in range(len(record)):
             print("Class %d: %d" %(classid,record[classid]))
         print("\n\n")
@@ -149,6 +154,69 @@ def cifar_iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
+def add_data(data,idxs,head,overall,group,num):
+    remaining = overall[group] - head[group]
+    if remaining > num:
+        data = np.concatenate((data,idxs[head[group] : head[group]+num]))
+        head[group] += num
+        return data
+    
+    data = np.concatenate((data,idxs[head[group] : head[group]+remaining]))
+    head[group] = overall[group]
+
+    filling = num - remaining
+    data = np.concatenate((data,idxs[head[group] : head[group]+filling]))
+    head[group] += filling
+    return data
+
+def dominance_client(heads,overalldist,idxs,dominance=None,dClass=None,sampleNum=300,classNum=10,group_size=6000):
+    if dominance is None:
+        dominance = random.uniform(0,0.5)
+    if dClass is None:
+        dClass = random.randint(0,9)
+
+    heads = overalldist
+    
+    iidClassSize = floor(sampleNum *(1 - dominance) / classNum)
+    nonClassSize = sampleNum - classNum * iidClassSize
+    result = np.array([], dtype='int64')
+    result = add_data(result,idxs,heads,overalldist,dClass,nonClassSize)
+
+    for i in range(classNum):
+        result = add_data(result,idxs,heads,overalldist,i,iidClassSize)
+    
+    return result, dominance
+
+def complex_skewness_mnist(dataset, num_users=100):
+    data_per_node = 300
+    data_num = 60000
+    class_num = 10
+    idxs = np.arange(data_num)
+    labels = dataset.train_labels.numpy()
+    dict_users = {}
+
+    overalldist = [0] * class_num
+    for i in range(len(labels)):
+        overalldist[labels[i]] += 1
+    overalldist.insert(0,0)
+    for i in range(1,class_num):
+        overalldist[i] += overalldist[i-1]
+    heads = overalldist.copy()
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    dominances = []
+
+    for i in range(num_users):
+        subset, domi = dominance_client(heads,overalldist,idxs)
+        dict_users[i] = subset
+        dominances.append(domi)
+    
+    return dict_users, dominances
+
 
 if __name__ == '__main__':
     dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True,
@@ -157,5 +225,5 @@ if __name__ == '__main__':
                                        transforms.Normalize((0.1307,), (0.3081,))
                                    ]))
     num = 100
-    d = mnist_50_50_iid(dataset_train, num)
-    spell_partition_mnist(d,dataset_train.train_labels.numpy())
+    d,domi = complex_skewness_mnist(dataset_train, num)
+    spell_partition_mnist(d,dataset_train.train_labels.numpy(),domi)

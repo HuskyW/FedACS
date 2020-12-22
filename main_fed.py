@@ -19,7 +19,8 @@ from models.Nets import MLP, CNNMnist, CNNCifar
 from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
 from models.test import test_img
 
-import utils.evaluate as evaluate
+from utils.evaluate import scaledL2NormEvaluate
+from models.Bound import estimateBounds
 
 
 if __name__ == '__main__':
@@ -110,9 +111,10 @@ if __name__ == '__main__':
         # update global weights
         if args.mode == 0:
             w_glob = FedAvg(w_locals)
-
             if iter != 1:
-                l2n = evaluate.l2NormEvaluate(w_old,w_locals)
+                firstDevice = min(idxs_users)
+                scales = estimateBounds(dataset_train,dict_users[firstDevice],args,net_glob)
+                l2n = scaledL2NormEvaluate(w_old,w_locals,scales)
                 for i in range(len(idxs_users)):
                     clientidx = idxs_users[i]
                     l2eval[iter-2][clientidx] = l2n[i]
