@@ -73,7 +73,7 @@ def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=True,checking=None):
 def FedAvgWithL2(w,w_old,avg_l2,boosting=False,cutting=False,mute=True,checking=None):
 
     boostingThres = avg_l2 * 1
-    cuttingThres = avg_l2 * 1.2
+    cuttingThres = avg_l2 * 0.9
     boostcountThres = 0.8
 
     if w_old is None: # 1st iter

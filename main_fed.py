@@ -129,7 +129,13 @@ if __name__ == '__main__':
                 w_glob,avgl2 = FedAvgWithL2(w_locals,None,0,boosting=False,cutting=False,mute=False)
                 l2_record = avgl2
             else:
-                w_glob,avgl2 = FedAvgWithL2(w_locals,w_old,l2_record,boosting=True,cutting=True,mute=False,checking=(idxs_users,70))
+                if args.iid == 2:
+                    checkinghead = 70
+                elif args.iid == 3:
+                    checkinghead = 50
+                else:
+                    continue
+                w_glob,avgl2 = FedAvgWithL2(w_locals,w_old,l2_record,boosting=False,cutting=True,mute=False,checking=(idxs_users,checkinghead))
                 l2_record = l2_record * 0.8 + avgl2 * 0.2
 
         else:
