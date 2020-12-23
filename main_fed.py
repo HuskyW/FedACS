@@ -12,14 +12,14 @@ from torchvision import datasets, transforms
 import torch
 import openpyxl
 
-from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid, mnist_50_50_iid
+from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid, mnist_50_50_iid, complex_skewness_mnist
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
 from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
 from models.test import test_img
 
-from utils.evaluate import scaledL2NormEvaluate
+from utils.evaluate import scaledL2NormEvaluate, l2NormEvaluate
 from models.Bound import estimateBounds
 
 
@@ -45,6 +45,8 @@ if __name__ == '__main__':
             dict_users = mnist_merged_iid(dataset_train, args.num_users)
         elif args.iid == 3:
             dict_users = mnist_50_50_iid(dataset_train, args.num_users)
+        elif args.iid == 4:
+            dict_users, dominence = complex_skewness_mnist(dataset_train, args.num_users)
         else:
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
@@ -112,9 +114,7 @@ if __name__ == '__main__':
         if args.mode == 0:
             w_glob = FedAvg(w_locals)
             if iter != 1:
-                firstDevice = min(idxs_users)
-                scales = estimateBounds(dataset_train,dict_users[firstDevice],args,net_glob)
-                l2n = scaledL2NormEvaluate(w_old,w_locals,scales)
+                l2n = l2NormEvaluate(w_old,w_locals)
                 for i in range(len(idxs_users)):
                     clientidx = idxs_users[i]
                     l2eval[iter-2][clientidx] = l2n[i]
@@ -165,7 +165,8 @@ if __name__ == '__main__':
             fp.write(content)
         print('Log written')
 
-
+    dominence = np.expand_dims(dominence,0)
+    l2eval = np.concatenate((dominence,l2eval),axis=0)
     writer = pd.ExcelWriter('l2eval.xlsx')
     l2pandas = pd.DataFrame(l2eval)
     l2pandas.to_excel(writer, 'sheet_1', float_format='%f')
