@@ -171,7 +171,7 @@ def add_data(data,idxs,head,overall,group,num):
 
 def dominance_client(heads,overalldist,idxs,dominance=None,dClass=None,sampleNum=300,classNum=10,group_size=6000):
     if dominance is None:
-        dominance = random.uniform(0,0.5)
+        dominance = random.uniform(0,0.6)
     if dClass is None:
         dClass = random.randint(0,9)
 
