@@ -21,6 +21,7 @@ from models.test import test_img
 
 from utils.evaluate import scaledL2NormEvaluate, l2NormEvaluate
 from models.Bound import estimateBounds
+from models.Bandit import UcbqrBandit, Rexp3Bandit, MoveAvgBandit
 
 
 if __name__ == '__main__':
@@ -46,7 +47,7 @@ if __name__ == '__main__':
         elif args.iid == 3:
             dict_users = mnist_50_50_iid(dataset_train, args.num_users)
         elif args.iid == 4:
-            dict_users, dominence = complex_skewness_mnist(dataset_train, args.num_users)
+            dict_users, dominence = complex_skewness_mnist(dataset_train, args.num_users,num_samples=args.local_bs)
         else:
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
@@ -76,8 +77,20 @@ if __name__ == '__main__':
     print(net_glob)
     net_glob.train()
 
+    # client selection scheme
+    if args.client_sel == 0:
+        pass
+    elif args.client_sel == 1:
+        bandit = UcbqrBandit(args.num_users)
+    elif args.client_sel == 2:
+        bandit = MoveAvgBandit(args.num_users)
+    else:
+        print("Bad Argument: client_sel")
+        exit(-1)
+
     # copy weights
     w_glob = net_glob.state_dict()
+    w_old = copy.deepcopy(w_glob)
 
     # training
     loss_train = []
@@ -89,6 +102,9 @@ if __name__ == '__main__':
 
     if args.testing > 0:
         testacc = []
+    
+    domilog = []
+    rewardlog = []
 
     l2eval = np.ones((args.epochs-1,args.num_users))
     l2eval = l2eval*-1
@@ -101,7 +117,15 @@ if __name__ == '__main__':
         if not args.all_clients:
             w_locals = []
         m = max(int(args.frac * args.num_users), 1)
-        idxs_users = np.random.choice(range(args.num_users), m, replace=False)
+
+
+        # client selection
+        if args.client_sel != 0:
+            idxs_users = bandit.requireArms(m)
+        else:
+            idxs_users = np.random.choice(range(args.num_users), m, replace=False)
+
+        
         for idx in idxs_users:
             local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
@@ -113,18 +137,6 @@ if __name__ == '__main__':
         # update global weights
         if args.mode == 0:
             w_glob = FedAvg(w_locals)
-            if iter != 1:
-                oblist = range(140,200)
-                obval = []
-                for obuser in oblist:
-                    local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[obuser])
-                    w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
-                    obval.append(copy.deepcopy(w))
-                l2n = l2NormEvaluate(w_old,obval,copy.deepcopy(w_glob))
-                for i in range(len(l2n)):
-                    clientidx = oblist[i]
-                    l2eval[iter-2][clientidx] = l2n[i]
-
         elif args.mode == 1:
             if iter == 1:
                 w_glob = FedAvg(w_locals)
@@ -149,9 +161,32 @@ if __name__ == '__main__':
         else:
             exit('Bad argument: mode')
 
-        w_old = w_glob
+        # Evaluate L2 norm and update rewards
+        if args.client_sel != 0:
+            l2n = l2NormEvaluate(w_old,w_locals,copy.deepcopy(w_glob))
+            rewards = {}
+            for i in range(len(l2n)):
+                clientidx = idxs_users[i]
+                rewards[clientidx] = l2n[i] * -1 * args.local_bs
+
+                # write log
+                l2eval[iter-2][clientidx] = l2n[i]
+            bandit.updateWithRewards(rewards)
+        
+
+        w_old = copy.deepcopy(w_glob)
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
+
+        # Log reward and domi
+        avgl2n = sum(l2n)/len(l2n)
+        rewardlog.append(-1*args.local_bs*avgl2n)
+
+        if args.iid == 4:
+            domi = []
+            for client in idxs_users:
+                domi.append(dominence[client])
+            domilog.append(float(sum(domi)/len(domi)))
 
 
         # test the model
@@ -161,16 +196,30 @@ if __name__ == '__main__':
             print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
             net_glob.train()
 
-            testacc.append((iter,float(acc_test)))
+            testacc.append(float(acc_test))
 
+    # Rounds terminals
     
 
-    with open("log.txt",'w') as fp:
+    with open("acc.log",'w') as fp:
         for i in range(len(testacc)):
-            content = str(testacc[i][1]) + '\n'
+            content = str(testacc[i]) + '\n'
             fp.write(content)
-        print('Log written')
+        print('Acc log written')
 
+    with open("reward.log",'w') as fp:
+        for i in range(len(rewardlog)):
+            content = str(rewardlog[i]) + '\n'
+            fp.write(content)
+        print('Reward log written')
+
+    with open("domi.log",'w') as fp:
+        for i in range(len(domilog)):
+            content = str(domilog[i]) + '\n'
+            fp.write(content)
+        print('Dominence log written')
+
+    '''
     dominence = np.expand_dims(dominence,0)
     l2eval = np.concatenate((dominence,l2eval),axis=0)
     writer = pd.ExcelWriter('l2eval.xlsx')
@@ -179,7 +228,7 @@ if __name__ == '__main__':
     writer.save()
     writer.close()
     print('L2 record written')
-
+    '''
     '''
     # plot loss curve
     plt.figure()

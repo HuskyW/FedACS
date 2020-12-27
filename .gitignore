@@ -59,5 +59,6 @@ save
 *.txt
 *.ipynb
 analysis/
+*.log
 
 .vscode

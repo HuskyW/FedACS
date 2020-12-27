@@ -189,7 +189,7 @@ def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sa
     
     return result, dominance
 
-def complex_skewness_mnist(dataset, num_users=100):
+def complex_skewness_mnist(dataset, num_users=100, num_samples=300):
     data_per_node = 300
     data_num = 60000
     class_num = 10
@@ -214,40 +214,11 @@ def complex_skewness_mnist(dataset, num_users=100):
     dominances = []
     counts = [0] * class_num
 
-    for i in range(num_users-60):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts)
+    for i in range(num_users):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples)
         dict_users[i] = subset
         dominances.append(domi)
 
-    for i in range(num_users-60,num_users-50):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.0)
-        dict_users[i] = subset
-        dominances.append(domi)
-
-    for i in range(num_users-50,num_users-40):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.2)
-        dict_users[i] = subset
-        dominances.append(domi)
-
-    for i in range(num_users-40,num_users-30):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.4)
-        dict_users[i] = subset
-        dominances.append(domi)
-
-    for i in range(num_users-30,num_users-20):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.6)
-        dict_users[i] = subset
-        dominances.append(domi)
-
-    for i in range(num_users-20,num_users-10):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.8)
-        dict_users[i] = subset
-        dominances.append(domi)
-
-    for i in range(num_users-10,num_users):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=1.0)
-        dict_users[i] = subset
-        dominances.append(domi)
     
     return dict_users, dominances
 
