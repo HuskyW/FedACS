@@ -16,7 +16,7 @@ class Rexp3Bandit(Bandit):
     def __init__(self,num_clients):
         self.num_clients = num_clients
         self.batch_size = 500
-        self.gamma = 0.1
+        self.gamma = 0.2
         self.round_idx = 0
         self.clients = np.arange(self.num_clients)
         self.weights = np.ones((self.num_clients))
@@ -45,7 +45,7 @@ class Rexp3Bandit(Bandit):
 
     def __possibilities(self,reweight=False):
         if reweight == True:
-            self.weights = self.weights * self.num_clients / sum(self.weights)
+            self.weights = self.weights * (self.num_clients / sum(self.weights))
         weights_sum = sum(self.weights)
         possi = np.zeros((self.num_clients))
         for i in range(self.num_clients):
@@ -64,6 +64,8 @@ class UcbqrBandit(Bandit):
         self.uninitialized = [i for i in range(self.num_clients)]
         self.lastinit = 0
         self.confidence = 0.8
+        self.extendCandidates = 1
+        self.forgetlose = 1
         
     def requireArms(self,num_picked):
         if len(self.uninitialized) >= num_picked:
@@ -91,12 +93,14 @@ class UcbqrBandit(Bandit):
         optimism = self.__optimism()
         sortopti = sorted(optimism.items(),key=lambda x:x[1],reverse=True)
 
-        result = np.zeros((num_picked))
+        candidates = np.zeros((num_picked*self.extendCandidates))
 
-        for i in range(num_picked):
-            result[i] = sortopti[i][0]
+        for i in range(num_picked*self.extendCandidates):
+            candidates[i] = sortopti[i][0]
+
+        draw = np.random.choice(candidates,num_picked,replace=False)
         
-        return result
+        return draw
 
 
     def updateWithRewards(self,rewards):
@@ -127,6 +131,9 @@ class UcbqrBandit(Bandit):
                             continue
                         self.utility[i] += 1
                         self.utility[j] -= 1
+
+        for client in self.lose.keys():
+            self.lose[client] = np.ceil(self.lose[client]*self.forgetlose)
         return
                 
 
@@ -155,13 +162,18 @@ class UcbqrBandit(Bandit):
 
 if __name__ == "__main__":
     bandit = UcbqrBandit(100)
+    #bandit = Rexp3Bandit(100)
+    record = []
     for r in range(500):
         arms = bandit.requireArms(10)
-        print("Round %3d: reward %.1f" % (r,sum(arms)/len(arms)))
+        realuti = sum(arms)/len(arms)
+        record.append(realuti)
+        print("Round %3d: reward %.1f" % (r,realuti))
         rewards = {}
         for i in arms:
-            flowing = (np.random.ranf()/2.5) + 0.8
-            rewards[i] = i * (1-0.001*r) * flowing
-            #rewards[i] = i * flowing
+            flowing = (np.random.ranf()/5) + 0.9
+            rewards[i] = (i+1) * (1-0.001*r) * flowing
+            #rewards[i] = (i+1) * flowing
         bandit.updateWithRewards(rewards)
     
+    print("Average Utility: %1f" % (sum(record)/len(record)) )
