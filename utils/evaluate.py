@@ -33,13 +33,18 @@ def deltaWeightEvaluate(w,w_old):
     print("range: %.4f, IQR: %.4f, IQR/range: %.4f, std/range:  %.4f" % (wmax-wmin , q3-q1 , (q3-q1)/(wmax-wmin) , wstd/(wmax-wmin)))
 
 
-def l2NormEvaluate(w_old,w):
+def l2NormEvaluate(w_old,w,replace_avg=None):
     if w_old is None: # 1st iter
         w_delta = w
     else:
         w_delta = Fed.DeltaWeights(w,w_old)
 
-    w_davg = Fed.FedAvg(w_delta)
+    if replace_avg is None:
+        w_davg = Fed.FedAvg(w_delta)
+    else:
+        ravglist = [replace_avg]
+        w_davgl = Fed.DeltaWeights(ravglist,w_old)
+        w_davg = w_davgl[0]
 
     l2norms = [0] * len(w)
     for k in w_davg.keys():

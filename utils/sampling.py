@@ -154,11 +154,13 @@ def cifar_iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
-def add_data(data,idxs,head,overall,group,num):
-    remaining = overall[group] - head[group]
+def add_data(data,idxs,head,overall,group,num,counts):
+    remaining = overall[group+1] - head[group]
+    counts[group] += num
     if remaining > num:
         data = np.concatenate((data,idxs[head[group] : head[group]+num]))
         head[group] += num
+
         return data
     
     data = np.concatenate((data,idxs[head[group] : head[group]+remaining]))
@@ -169,21 +171,21 @@ def add_data(data,idxs,head,overall,group,num):
     head[group] += filling
     return data
 
-def dominance_client(heads,overalldist,idxs,dominance=None,dClass=None,sampleNum=300,classNum=10,group_size=6000):
+def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sampleNum=300,classNum=10,group_size=6000):
     if dominance is None:
-        dominance = random.uniform(0,0.6)
+        dominance = random.uniform(0,1.0)
     if dClass is None:
-        dClass = random.randint(0,9)
+        dClass = counts.index(min(counts))
 
-    heads = overalldist
+    dominance = float(dominance)
     
     iidClassSize = floor(sampleNum *(1 - dominance) / classNum)
     nonClassSize = sampleNum - classNum * iidClassSize
     result = np.array([], dtype='int64')
-    result = add_data(result,idxs,heads,overalldist,dClass,nonClassSize)
+    result = add_data(result,idxs,heads,overalldist,dClass,nonClassSize,counts)
 
     for i in range(classNum):
-        result = add_data(result,idxs,heads,overalldist,i,iidClassSize)
+        result = add_data(result,idxs,heads,overalldist,i,iidClassSize,counts)
     
     return result, dominance
 
@@ -199,9 +201,10 @@ def complex_skewness_mnist(dataset, num_users=100):
     for i in range(len(labels)):
         overalldist[labels[i]] += 1
     overalldist.insert(0,0)
-    for i in range(1,class_num):
+    for i in range(1,class_num+1):
         overalldist[i] += overalldist[i-1]
     heads = overalldist.copy()
+    del[heads[class_num]]
 
     # sort labels
     idxs_labels = np.vstack((idxs, labels))
@@ -209,9 +212,40 @@ def complex_skewness_mnist(dataset, num_users=100):
     idxs = idxs_labels[0,:]
 
     dominances = []
+    counts = [0] * class_num
 
-    for i in range(num_users):
-        subset, domi = dominance_client(heads,overalldist,idxs)
+    for i in range(num_users-60):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    for i in range(num_users-60,num_users-50):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.0)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    for i in range(num_users-50,num_users-40):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.2)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    for i in range(num_users-40,num_users-30):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.4)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    for i in range(num_users-30,num_users-20):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.6)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    for i in range(num_users-20,num_users-10):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=0.8)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    for i in range(num_users-10,num_users):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,dominance=1.0)
         dict_users[i] = subset
         dominances.append(domi)
     
@@ -224,6 +258,6 @@ if __name__ == '__main__':
                                        transforms.ToTensor(),
                                        transforms.Normalize((0.1307,), (0.3081,))
                                    ]))
-    num = 100
+    num = 200
     d,domi = complex_skewness_mnist(dataset_train, num)
     spell_partition_mnist(d,dataset_train.train_labels.numpy(),domi)

@@ -114,9 +114,15 @@ if __name__ == '__main__':
         if args.mode == 0:
             w_glob = FedAvg(w_locals)
             if iter != 1:
-                l2n = l2NormEvaluate(w_old,w_locals)
-                for i in range(len(idxs_users)):
-                    clientidx = idxs_users[i]
+                oblist = range(140,200)
+                obval = []
+                for obuser in oblist:
+                    local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[obuser])
+                    w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
+                    obval.append(copy.deepcopy(w))
+                l2n = l2NormEvaluate(w_old,obval,copy.deepcopy(w_glob))
+                for i in range(len(l2n)):
+                    clientidx = oblist[i]
                     l2eval[iter-2][clientidx] = l2n[i]
 
         elif args.mode == 1:
