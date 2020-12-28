@@ -162,15 +162,17 @@ if __name__ == '__main__':
             exit('Bad argument: mode')
 
         # Evaluate L2 norm and update rewards
-        if args.client_sel != 0:
-            l2n = l2NormEvaluate(w_old,w_locals,copy.deepcopy(w_glob))
-            rewards = {}
-            for i in range(len(l2n)):
-                clientidx = idxs_users[i]
-                rewards[clientidx] = l2n[i] * -1 * args.local_bs
 
-                # write log
-                l2eval[iter-2][clientidx] = l2n[i]
+        l2n = l2NormEvaluate(w_old,w_locals,copy.deepcopy(w_glob))
+        rewards = {}
+        for i in range(len(l2n)):
+            clientidx = idxs_users[i]
+            rewards[clientidx] = l2n[i] * -1 * args.local_bs
+
+            # write log
+            l2eval[iter-2][clientidx] = l2n[i]
+        
+        if args.client_sel != 0:
             bandit.updateWithRewards(rewards)
         
 

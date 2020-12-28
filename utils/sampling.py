@@ -5,7 +5,7 @@
 import random
 import numpy as np
 from torchvision import datasets, transforms
-from math import floor
+import math
 
 def mnist_iid(dataset, num_users):
     """
@@ -173,13 +173,13 @@ def add_data(data,idxs,head,overall,group,num,counts):
 
 def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sampleNum=300,classNum=10,group_size=6000):
     if dominance is None:
-        dominance = random.uniform(0,1.0)
+        dominance = math.sqrt(random.uniform(0,1.0))
     if dClass is None:
         dClass = counts.index(min(counts))
 
     dominance = float(dominance)
     
-    iidClassSize = floor(sampleNum *(1 - dominance) / classNum)
+    iidClassSize = math.floor(sampleNum *(1 - dominance) / classNum)
     nonClassSize = sampleNum - classNum * iidClassSize
     result = np.array([], dtype='int64')
     result = add_data(result,idxs,heads,overalldist,dClass,nonClassSize,counts)
@@ -190,7 +190,6 @@ def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sa
     return result, dominance
 
 def complex_skewness_mnist(dataset, num_users=100, num_samples=300):
-    data_per_node = 300
     data_num = 60000
     class_num = 10
     idxs = np.arange(data_num)

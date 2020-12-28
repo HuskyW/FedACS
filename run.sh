@@ -1,11 +1,16 @@
 #!/bin/bash
 
-for trial in {1..5..1}
+rm -f ./save/acc/*
+rm -f ./save/domi/*
+rm -f ./save/reward/*
+for trial in {1..10..1}
 do
+echo -e "\n\n\n"
 echo "================================="
-echo "          Trial $trial"
+echo "           Trial $trial"
 echo "================================="
-python main_fed.py --epochs 5 --local_ep 1 --local_bs 300 --model cnn --dataset mnist --iid 4 --testing 1 --mode 0 --client_sel 1
+echo -e "\n\n\n"
+python main_fed.py --epochs 1000 --local_ep 1 --local_bs 300 --model cnn --dataset mnist --iid 4 --testing 1 --mode 0 --client_sel 0
 name="${trial}.log"
 accpath="./save/acc/$name"
 domipath="./save/domi/$name"
