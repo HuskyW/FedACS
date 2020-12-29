@@ -32,6 +32,14 @@ if __name__ == '__main__':
     # seed
     np.random.seed(args.seed)
 
+    # restore args
+    if args.dataset == 'mnist':
+        args.num_channels = 1
+        args.local_bs = int(60000/args.num_users)
+    if args.dataset == 'cifar':
+        args.num_channels = 3
+        args.local_bs = int(50000/args.num_users)
+
     # load dataset and split users
     if args.dataset == 'mnist':
         trans_mnist = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
@@ -39,7 +47,7 @@ if __name__ == '__main__':
         dataset_test = datasets.MNIST('../data/mnist/', train=False, download=True, transform=trans_mnist)
         # sample users
         if args.iid == 0:
-            dict_users = mnist_iid(dataset_train, args.num_users)
+            dict_users,dominance = mnist_iid(dataset_train, args.num_users)
         elif args.iid == 1:
             dict_users = mnist_noniid(dataset_train, args.num_users)
         elif args.iid == 2:
@@ -55,7 +63,7 @@ if __name__ == '__main__':
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
         if args.iid == 0:
-            dict_users = cifar_iid(dataset_train, args.num_users)
+            dict_users, dominance = cifar_iid(dataset_train, args.num_users)
         elif args.iid == 4:
             dict_users, dominence = complex_skewness_cifar(dataset_train,args.num_users)
         else:
@@ -163,11 +171,10 @@ if __name__ == '__main__':
             avgl2n = sum(l2n)/len(l2n)
             rewardlog.append(-1*args.local_bs*avgl2n)
 
-            if args.iid == 4:
-                domi = []
-                for client in idxs_users:
-                    domi.append(dominence[client])
-                domilog.append(float(sum(domi)/len(domi)))
+            domi = []
+            for client in idxs_users:
+                domi.append(dominence[client])
+            domilog.append(float(sum(domi)/len(domi)))
 
 
             # test and log accuracy
