@@ -69,7 +69,7 @@ class UcbqrBandit(Bandit):
 
         # parameters
         self.confidence = 0.8
-        self.extendCandidates = 1.5
+        self.extendCandidates = 2
         self.forgetLose = 1 # 1: dont forget, 0.98: forget 2% each round
         self.fairnessReservation = 0
         

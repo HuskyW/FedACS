@@ -12,7 +12,7 @@ from torchvision import datasets, transforms
 import torch
 import openpyxl
 
-from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid, mnist_50_50_iid, complex_skewness_mnist
+from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid, mnist_50_50_iid, complex_skewness_mnist, complex_skewness_cifar
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -56,6 +56,8 @@ if __name__ == '__main__':
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
         if args.iid == 0:
             dict_users = cifar_iid(dataset_train, args.num_users)
+        elif args.iid == 4:
+            dict_users, dominence = complex_skewness_cifar(dataset_train,args.num_users)
         else:
             exit('Error: only consider IID setting in CIFAR10')
     else:
@@ -181,18 +183,19 @@ if __name__ == '__main__':
         net_glob.load_state_dict(w_glob)
 
         # Log reward and domi
-        avgl2n = sum(l2n)/len(l2n)
-        rewardlog.append(-1*args.local_bs*avgl2n)
-
-        if args.iid == 4:
-            domi = []
-            for client in idxs_users:
-                domi.append(dominence[client])
-            domilog.append(float(sum(domi)/len(domi)))
-
-
-        # test the model
         if iter > 0 and iter % args.testing == 0 and args.testing > 0:
+            avgl2n = sum(l2n)/len(l2n)
+            rewardlog.append(-1*args.local_bs*avgl2n)
+
+            if args.iid == 4:
+                domi = []
+                for client in idxs_users:
+                    domi.append(dominence[client])
+                domilog.append(float(sum(domi)/len(domi)))
+
+
+            # test and log accuracy
+            
             net_glob.eval()
             acc_test, loss_test = test_img(net_glob, dataset_test, args)
             print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
@@ -201,21 +204,36 @@ if __name__ == '__main__':
             testacc.append(float(acc_test))
 
     # Rounds terminals
-    
+    logidx = str(args.log_idx)
 
-    with open("acc.log",'w') as fp:
+    if args.log_idx < 0:
+        filepath = "acc.log"
+    else:
+        filepath = "./save/acc/"+logidx+'.log'
+    
+    with open(filepath,'w') as fp:
         for i in range(len(testacc)):
             content = str(testacc[i]) + '\n'
             fp.write(content)
         print('Acc log written')
 
-    with open("reward.log",'w') as fp:
+    if args.log_idx < 0:
+        filepath = "reward.log"
+    else:
+        filepath = "./save/reward/"+logidx+'.log'
+
+    with open(filepath,'w') as fp:
         for i in range(len(rewardlog)):
             content = str(rewardlog[i]) + '\n'
             fp.write(content)
         print('Reward log written')
 
-    with open("domi.log",'w') as fp:
+    if args.log_idx < 0:
+        filepath = "domi.log"
+    else:
+        filepath = "./save/domi/"+logidx+'.log'
+
+    with open(filepath,'w') as fp:
         for i in range(len(domilog)):
             content = str(domilog[i]) + '\n'
             fp.write(content)

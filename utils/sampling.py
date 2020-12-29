@@ -173,7 +173,7 @@ def add_data(data,idxs,head,overall,group,num,counts):
 
 def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sampleNum=300,classNum=10,group_size=6000):
     if dominance is None:
-        dominance = math.sqrt(random.uniform(0,1.0))
+        dominance = random.uniform(0,1.0)
     if dClass is None:
         dClass = counts.index(min(counts))
 
@@ -221,8 +221,41 @@ def complex_skewness_mnist(dataset, num_users=100, num_samples=300):
     
     return dict_users, dominances
 
+def complex_skewness_cifar(dataset, num_users=100, num_samples=300):
+    data_num = 50000
+    class_num = 10
+    idxs = np.arange(data_num)
+    labels = np.array(dataset.targets)
+    dict_users = {}
+
+    overalldist = [0] * class_num
+    for i in range(len(labels)):
+        overalldist[labels[i]] += 1
+    overalldist.insert(0,0)
+    for i in range(1,class_num+1):
+        overalldist[i] += overalldist[i-1]
+    heads = overalldist.copy()
+    del[heads[class_num]]
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    dominances = []
+    counts = [0] * class_num
+
+    for i in range(num_users):
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    
+    return dict_users, dominances
+
 
 if __name__ == '__main__':
+    '''
     dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True,
                                    transform=transforms.Compose([
                                        transforms.ToTensor(),
@@ -231,3 +264,11 @@ if __name__ == '__main__':
     num = 200
     d,domi = complex_skewness_mnist(dataset_train, num)
     spell_partition_mnist(d,dataset_train.train_labels.numpy(),domi)
+    '''
+
+    trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    dataset_train = datasets.CIFAR10('../../data/cifar', train=True, download=True, transform=trans_cifar)
+    num = 200
+    d,domi = complex_skewness_cifar(dataset_train, num)
+    spell_partition_mnist(d,np.array(dataset_train.targets),domi)
+

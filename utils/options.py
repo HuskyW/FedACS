@@ -42,6 +42,7 @@ def args_parser():
     parser.add_argument('--testing', type=int, default=1, help="test the model after some rounds, -1: never")
     parser.add_argument('--mode', type=int, default=0, help="Mode, 0:vanilla, 1:CMFL, 2:L2norm")
     parser.add_argument('--client_sel', type=int, default=0, help="Client selection, 0:random, 1:UcbQr bandit, 2:MoveAvg bandit")
+    parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")
 
     args = parser.parse_args()
     return args
