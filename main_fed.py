@@ -137,31 +137,7 @@ if __name__ == '__main__':
                 w_locals.append(copy.deepcopy(w))
             loss_locals.append(copy.deepcopy(loss))
         # update global weights
-        if args.mode == 0:
-            w_glob = FedAvg(w_locals)
-        elif args.mode == 1:
-            if iter == 1:
-                w_glob = FedAvg(w_locals)
-            else:
-                w_glob = FedAvgWithCmfl(w_locals,w_old,threshold=0.6,mute=False,checking=(idxs_users,70))
-
-
-        elif args.mode == 2:
-            if iter == 1:
-                w_glob,avgl2 = FedAvgWithL2(w_locals,None,0,boosting=False,cutting=False,mute=False)
-                l2_record = avgl2
-            else:
-                if args.iid == 2:
-                    checkinghead = 70
-                elif args.iid == 3:
-                    checkinghead = 50
-                else:
-                    continue
-                w_glob,avgl2 = FedAvgWithL2(w_locals,w_old,l2_record,boosting=False,cutting=True,mute=False,checking=(idxs_users,checkinghead))
-                l2_record = l2_record * 0.8 + avgl2 * 0.2
-
-        else:
-            exit('Bad argument: mode')
+        w_glob = FedAvg(w_locals)
 
         # Evaluate L2 norm and update rewards
 
