@@ -46,124 +46,6 @@ def mnist_iid(dataset, num_users=200,num_samples=300):
     return dict_users, dominances
 
 
-def mnist_noniid(dataset, num_users):
-    """
-    Sample non-I.I.D client data from MNIST dataset
-    :param dataset:
-    :param num_users:
-    :return:
-    """
-    num_shards, num_imgs = 200, 300
-    idx_shard = [i for i in range(num_shards)]
-    dict_users = {i: np.array([], dtype='int64') for i in range(num_users)}
-    idxs = np.arange(num_shards*num_imgs)
-    labels = dataset.train_labels.numpy()
-
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
-    idxs = idxs_labels[0,:]
-
-    # divide and assign
-    for i in range(num_users):
-        rand_set = set(np.random.choice(idx_shard, 2, replace=False))
-        idx_shard = list(set(idx_shard) - rand_set)
-        for rand in rand_set:
-            dict_users[i] = np.concatenate((dict_users[i], idxs[rand*num_imgs:(rand+1)*num_imgs]), axis=0)
-    return dict_users
-
-def mnist_merged_iid(dataset, num_users):
-    data_per_node = 300
-    data_num = 60000
-    class_num = 10
-    class_size = int(data_num/class_num)
-    data_per_nc = int(data_per_node / class_num)
-
-    dict_users = {i: np.array([], dtype='int64') for i in range(num_users)}
-    idxs = np.arange(data_num)
-    labels = dataset.train_labels.numpy()
-
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
-    idxs = idxs_labels[0,:]
-
-    iidRatio = 0.7
-    iid_users = int(num_users * iidRatio)
-    noniid_users = num_users - iid_users
-
-    # iid nodes
-    for i in range(iid_users):
-        for c in range(class_num):
-            dict_users[i] = np.concatenate((dict_users[i], idxs[class_size*c+data_per_nc*i:class_size*c+data_per_nc*(i+1)]), axis=0)
-
-    # non-iid nodes
-    node_per_class = int(noniid_users / 3)
-    for c in range(3):
-        for i in range(node_per_class):
-            nodeid = iid_users + c * node_per_class + i
-            rand = np.random.randint(class_size - data_per_node)
-            datastart = c*class_size + rand
-            dict_users[nodeid] = np.concatenate((dict_users[nodeid], idxs[datastart:datastart+data_per_node]), axis=0)
-    return dict_users
-
-def mnist_50_50_iid(dataset, num_users=100):
-    data_per_node = 300
-    data_num = 60000
-    class_num = 10
-    class_size = int(data_num/class_num)
-    data_per_nc = int(data_per_node / class_num)
-
-    dict_users = {i: np.array([], dtype='int64') for i in range(num_users)}
-    idxs = np.arange(data_num)
-    labels = dataset.train_labels.numpy()
-
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
-    idxs = idxs_labels[0,:]
-
-    head = [0] * 10
-
-    iid_users = 50
-    noniid_users = 50
-    noniid_perclass = int(noniid_users / class_num)
-
-    # iid nodes
-    perclass_size = int(data_per_node/class_num)
-    for i in range(iid_users):
-        for c in range(class_num):
-            dict_users[i] = np.concatenate((dict_users[i], idxs[class_size*c+head[c] : class_size*c+head[c]+perclass_size]), axis=0)
-            head[c] += perclass_size
-            head[c] = head[c] % class_size
-
-    # non-iid nodes
-    node_per_class = int(noniid_users / class_num)
-    for c in range(class_num):
-        for i in range(node_per_class):
-            nodeid = iid_users + c * node_per_class + i
-            dict_users[nodeid] = np.concatenate((dict_users[nodeid], idxs[class_size*c+head[c]:class_size*c+head[c]+data_per_node]), axis=0)
-            head[c] += data_per_node
-            head[c] = head[c] % class_size
-    return dict_users
-
-def spell_partition_mnist(partition, labels,dominence=None):
-
-    for nodeid, dataid in partition.items():
-        record = [0] * 10
-        for data in dataid:
-            label = labels[data]
-            record[label] += 1
-        
-        print("Client %d"% nodeid)
-        if dominence is not None:
-            print("Dominence: %.2f"% dominence[nodeid])
-
-        for classid in range(len(record)):
-            print("Class %d: %d" %(classid,record[classid]))
-        print("\n\n")
-
-
 def cifar_iid(dataset, num_users=200, num_samples=250):
     """
     Sample I.I.D. client data from CIFAR10 dataset
@@ -395,6 +277,24 @@ def nclass_skewness_mnist(dataset, num_users=200, num_samples=300, class_num=10)
     return dict_users, dominances
 
 
+
+def spell_partition(partition, labels,dominence=None):
+
+    for nodeid, dataid in partition.items():
+        record = [0] * 10
+        for data in dataid:
+            label = labels[data]
+            record[label] += 1
+        
+        print("Client %d"% nodeid)
+        if dominence is not None:
+            print("Dominence: %.2f"% dominence[nodeid])
+
+        for classid in range(len(record)):
+            print("Class %d: %d" %(classid,record[classid]))
+        print("\n\n")
+
+
 if __name__ == '__main__':
     
     dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True,
@@ -404,12 +304,12 @@ if __name__ == '__main__':
                                    ]))
     num = 200
     d,domi = nclass_skewness_mnist(dataset_train, num)
-    spell_partition_mnist(d,dataset_train.train_labels.numpy(),domi)
+    spell_partition(d,dataset_train.train_labels.numpy(),domi)
     
     '''
     trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     dataset_train = datasets.CIFAR10('../../data/cifar', train=True, download=True, transform=trans_cifar)
     num = 200
     d,domi = nclass_skewness_cifar(dataset_train, num)
-    spell_partition_mnist(d,np.array(dataset_train.targets),domi)
+    spell_partition(d,np.array(dataset_train.targets),domi)
     '''
