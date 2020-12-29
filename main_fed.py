@@ -12,7 +12,7 @@ from torchvision import datasets, transforms
 import torch
 import openpyxl
 
-from utils.sampling import mnist_iid, mnist_noniid, cifar_iid, mnist_merged_iid, mnist_50_50_iid, complex_skewness_mnist, complex_skewness_cifar
+from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, complex_skewness_cifar, nclass_skewness_cifar, nclass_skewness_mnist
 from utils.options import args_parser
 from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -49,12 +49,8 @@ if __name__ == '__main__':
         if args.iid == 0:
             dict_users,dominance = mnist_iid(dataset_train, args.num_users)
         elif args.iid == 1:
-            dict_users = mnist_noniid(dataset_train, args.num_users)
+            dict_users, dominence = nclass_skewness_mnist(dataset_train, args.num_users)
         elif args.iid == 2:
-            dict_users = mnist_merged_iid(dataset_train, args.num_users)
-        elif args.iid == 3:
-            dict_users = mnist_50_50_iid(dataset_train, args.num_users)
-        elif args.iid == 4:
             dict_users, dominence = complex_skewness_mnist(dataset_train, args.num_users,num_samples=args.local_bs)
         else:
             exit("Bad argument: iid")
@@ -64,10 +60,12 @@ if __name__ == '__main__':
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
         if args.iid == 0:
             dict_users, dominance = cifar_iid(dataset_train, args.num_users)
-        elif args.iid == 4:
+        elif args.iid == 1:
+            dict_users, dominence = nclass_skewness_cifar(dataset_train, args.num_users)
+        elif args.iid == 2:
             dict_users, dominence = complex_skewness_cifar(dataset_train,args.num_users)
         else:
-            exit('Error: only consider IID setting in CIFAR10')
+            exit("Bad argument: iid")
     else:
         exit('Error: unrecognized dataset')
     img_size = dataset_train[0][0].shape

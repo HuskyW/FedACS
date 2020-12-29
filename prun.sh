@@ -12,7 +12,7 @@ for trial in {1..9..1}
 do
 {
 echo "Trial $trial"
-python main_fed.py --epochs 1000 --local_ep 1 --local_bs 300 --model cnn --dataset mnist --num_channels 1 --iid 0 --testing 10 --client_sel 0 --log_idx $trial > ./templog/$trial.log
+python main_fed.py --epochs 1000 --local_ep 1 --local_bs 300 --model cnn --dataset mnist --iid 1 --testing 10 --client_sel 0 --log_idx $trial > ./templog/$trial.log
 }&
 
 rem=$(($trial%5))
