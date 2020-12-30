@@ -41,7 +41,11 @@ def l2NormEvaluate(w_old,w,replace_avg=None):
         w_delta = Fed.DeltaWeights(w,w_old)
 
     if replace_avg is None:
-        w_davg = Fed.FedAvg(w_delta)
+        w_davg = copy.deepcopy(w_delta[0])
+        for k in w_davg.keys():
+            for i in range(1, len(w_delta)):
+                w_davg[k] += w_delta[i][k]
+            w_davg[k] = w_davg[k] / len(w_delta)
     else:
         ravglist = [replace_avg]
         w_davgl = Fed.DeltaWeights(ravglist,w_old)
@@ -49,29 +53,10 @@ def l2NormEvaluate(w_old,w,replace_avg=None):
 
     l2norms = [0] * len(w)
     for k in w_davg.keys():
-        avlist = w_davg[k].cpu().numpy().reshape(-1)
+        avlist = w_davg[k]
         for i in range(len(w)):
-            ilist = w_delta[i][k].cpu().numpy().reshape(-1)
+            ilist = w_delta[i][k]
             diff = avlist - ilist
-            l2norms[i] += np.linalg.norm(diff,ord=2)
-
-    return l2norms
-
-def scaledL2NormEvaluate(w_old,w,scale):
-    if w_old is None: # 1st iter
-        w_delta = w
-    else:
-        w_delta = Fed.DeltaWeights(w,w_old)
-
-    w_davg = Fed.FedAvg(w_delta)
-
-    l2norms = [0] * len(w)
-    for k in w_davg.keys():
-        avlist = w_davg[k].cpu().numpy().reshape(-1)
-        for i in range(len(w)):
-            ilist = w_delta[i][k].cpu().numpy().reshape(-1)
-            diff = avlist - ilist
-            diff = np.true_divide(diff,scale[k])
             l2norms[i] += np.linalg.norm(diff,ord=2)
 
     return l2norms

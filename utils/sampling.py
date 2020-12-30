@@ -299,9 +299,16 @@ def spell_partition(partition, labels,dominence=None):
             print("Class %d: %d" %(classid,record[classid]))
         print("\n\n")
 
+def spell_data_usage(partition,datanum):
+    record = [0]*datanum
+    for dataid in partition.values():
+        for data in dataid:
+            record[data] += 1
+    print("Avg usage: %.2f" % np.mean(record))
+    print("Max usage: %d" % max(record))
 
 if __name__ == '__main__':
-    
+    '''
     dataset_train = datasets.MNIST('../../data/mnist/', train=True, download=True,
                                    transform=transforms.Compose([
                                        transforms.ToTensor(),
@@ -310,11 +317,12 @@ if __name__ == '__main__':
     num = 200
     d,domi = nclass_skewness_mnist(dataset_train, num)
     spell_partition(d,dataset_train.train_labels.numpy(),domi)
-    
     '''
+    
     trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     dataset_train = datasets.CIFAR10('../../data/cifar', train=True, download=True, transform=trans_cifar)
     num = 200
-    d,domi = nclass_skewness_cifar(dataset_train, num)
-    spell_partition(d,np.array(dataset_train.targets),domi)
-    '''
+    d,domi = cifar_iid(dataset_train, num)
+    #spell_partition(d,np.array(dataset_train.targets),domi)
+    spell_data_usage(d,50000)
+    

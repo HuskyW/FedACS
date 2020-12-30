@@ -11,15 +11,16 @@ import pandas as pd
 from torchvision import datasets, transforms
 import torch
 import openpyxl
+import torchvision
 
 from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, complex_skewness_cifar, nclass_skewness_cifar, nclass_skewness_mnist
 from utils.options import args_parser
-from models.Update import LocalUpdate, SingalBgdUpdate
+from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
 from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
 from models.test import test_img
 
-from utils.evaluate import scaledL2NormEvaluate, l2NormEvaluate, FA_round
+from utils.evaluate import l2NormEvaluate, FA_round
 from models.Bound import estimateBounds
 from models.Bandit import UcbqrBandit, Rexp3Bandit, MoveAvgBandit
 
@@ -71,7 +72,9 @@ if __name__ == '__main__':
     img_size = dataset_train[0][0].shape
 
     # build model
-    if args.model == 'cnn' and args.dataset == 'cifar':
+    if args.model == 'resnet50' and args.dataset == 'cifar':
+        net_glob = torchvision.models.resnet50(pretrained=False)
+    elif args.model == 'cnn' and args.dataset == 'cifar':
         net_glob = CNNCifar(args=args).to(args.device)
     elif args.model == 'cnn' and args.dataset == 'mnist':
         net_glob = CNNMnist(args=args).to(args.device)
@@ -138,7 +141,7 @@ if __name__ == '__main__':
             if FA_round(args,iter) is False:
                 local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             else:
-                local = SingalBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+                local = SingleBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
             if args.all_clients:
                 w_locals[idx] = copy.deepcopy(w)
@@ -148,25 +151,33 @@ if __name__ == '__main__':
         # update global weights
         w_glob = FedAvg(w_locals)
 
-        # Evaluate L2 norm and update rewards
-
-        l2n = l2NormEvaluate(w_old,w_locals,copy.deepcopy(w_glob))
-        rewards = {}
-        for i in range(len(l2n)):
-            clientidx = idxs_users[i]
-            rewards[clientidx] = l2n[i] * -1 * numsamples
-
-            # write log
-            l2eval[iter-2][clientidx] = l2n[i]
-        
+        # Whether we need to evaluate L2 norm?
+        needEvaluate = False
+        if iter > 0 and iter % args.testing == 0 and args.testing > 0:
+            needEvaluate = True
         if args.client_sel != 0 and FA_round(args,iter) is True:
-            bandit.updateWithRewards(rewards)
+            needEvaluate = True  
+
+        # Evaluate L2 norm and update rewards
+        
+        if needEvaluate is True:
+            l2n = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(w_locals))
+            rewards = {}
+            for i in range(len(l2n)):
+                clientidx = idxs_users[i]
+                rewards[clientidx] = l2n[i] * -1 * numsamples
+
+                # write log
+                l2eval[iter-2][clientidx] = l2n[i]
+            
+            if args.client_sel != 0 and FA_round(args,iter) is True:
+                bandit.updateWithRewards(rewards)
         
 
-        w_old = copy.deepcopy(w_glob)
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
-
+        net_glob.cuda()
+        
         # Log reward and domi
         if iter > 0 and iter % args.testing == 0 and args.testing > 0:
             avgl2n = sum(l2n)/len(l2n)
@@ -186,7 +197,7 @@ if __name__ == '__main__':
             net_glob.train()
 
             testacc.append(float(acc_test))
-
+        
     # Rounds terminals
     logidx = str(args.log_idx)
 

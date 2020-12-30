@@ -161,5 +161,6 @@ def DeltaWeights(w,w_old):
     deltas = copy.deepcopy(w)
     for k in w[0].keys():
         for i in range(len(w)):
-            deltas[i][k] -= w_old[k]
+            deltas[i][k] = deltas[i][k].cpu().numpy().reshape(-1)
+            deltas[i][k] -= w_old[k].cpu().numpy().reshape(-1)
     return deltas

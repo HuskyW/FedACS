@@ -54,7 +54,7 @@ class LocalUpdate(object):
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
         return net.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
-class SingalBgdUpdate(object):
+class SingleBgdUpdate(object):
     def __init__(self, args, data_num=None, dataset=None, idxs=None):
         self.args = args
         self.loss_func = nn.CrossEntropyLoss()
