@@ -3,6 +3,7 @@ import torch
 from torch import nn
 from numpy import sign,ravel
 import numpy as np
+import math
 
 import models.Fed as Fed
 
@@ -83,6 +84,10 @@ def FA_round(args,iter):
     initRounds = int(1/args.frac)
     if iter <= 2*initRounds:
         return True
+
+    stage = math.floor(iter/initRounds)
+    stage = math.floor(math.log2(stage))
     
-    if iter <= 5*initRounds and iter % args.faf == 0:
+    if iter % (stage*args.faf) == 0:
         return True
+    return False

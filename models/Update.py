@@ -55,11 +55,13 @@ class LocalUpdate(object):
         return net.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
 class SingalBgdUpdate(object):
-    def __init__(self, args, data_num, dataset=None, idxs=None):
+    def __init__(self, args, data_num=None, dataset=None, idxs=None):
         self.args = args
         self.loss_func = nn.CrossEntropyLoss()
         self.selected_clients = []
         self.data_num = data_num
+        if data_num is None:
+            self.data_num = len(idxs)
         self.ldr_train = DataLoader(DatasetSplit(dataset, idxs), batch_size=data_num, shuffle=False)
         self.newLR = self.args.lr * self.args.local_ep / 2
 

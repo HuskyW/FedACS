@@ -14,12 +14,12 @@ import openpyxl
 
 from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, complex_skewness_cifar, nclass_skewness_cifar, nclass_skewness_mnist
 from utils.options import args_parser
-from models.Update import LocalUpdate
+from models.Update import LocalUpdate, SingalBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
 from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
 from models.test import test_img
 
-from utils.evaluate import scaledL2NormEvaluate, l2NormEvaluate
+from utils.evaluate import scaledL2NormEvaluate, l2NormEvaluate, FA_round
 from models.Bound import estimateBounds
 from models.Bandit import UcbqrBandit, Rexp3Bandit, MoveAvgBandit
 
@@ -135,7 +135,10 @@ if __name__ == '__main__':
 
         
         for idx in idxs_users:
-            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+            if FA_round(args,iter) is False:
+                local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+            else:
+                local = SingalBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
             if args.all_clients:
                 w_locals[idx] = copy.deepcopy(w)
@@ -156,7 +159,7 @@ if __name__ == '__main__':
             # write log
             l2eval[iter-2][clientidx] = l2n[i]
         
-        if args.client_sel != 0:
+        if args.client_sel != 0 and FA_round(args,iter) is True:
             bandit.updateWithRewards(rewards)
         
 

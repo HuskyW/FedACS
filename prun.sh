@@ -24,5 +24,6 @@ fi
 done
 wait
 
-time1=$(date)
-echo 'End:' $time1
+time2=$(date)
+echo 'Start:' $time1
+echo 'End:' $time2
