@@ -105,7 +105,8 @@ def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sa
     if dominance is None:
         dominance = random.uniform(0,1.0)
     if dClass is None:
-        dClass = counts.index(min(counts))
+        sortcounts = sorted(counts.items(),key=lambda x:x[1],reverse=False)
+        dClass = sortcounts[0][0]
 
     dominance = float(dominance)
     
@@ -188,7 +189,7 @@ def complex_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10
 
 def nclass_client(heads,overalldist,idxs,counts,n=None,sampleNum=300,classNum=10):
     if n is None:
-        draw = random.uniform(0,1.0)
+        draw = math.pow(random.uniform(0,1.0),4)
         n = math.ceil(classNum*draw)
 
     sortcounts = sorted(counts.items(),key=lambda x:x[1],reverse=False)

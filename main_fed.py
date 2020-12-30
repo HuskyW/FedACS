@@ -35,10 +35,10 @@ if __name__ == '__main__':
     # restore args
     if args.dataset == 'mnist':
         args.num_channels = 1
-        args.local_bs = int(60000/args.num_users)
+        numsamples = int(60000/args.num_users)
     if args.dataset == 'cifar':
         args.num_channels = 3
-        args.local_bs = int(50000/args.num_users)
+        numsamples = int(50000/args.num_users)
 
     # load dataset and split users
     if args.dataset == 'mnist':
@@ -49,9 +49,9 @@ if __name__ == '__main__':
         if args.iid == 0:
             dict_users,dominance = mnist_iid(dataset_train, args.num_users)
         elif args.iid == 1:
-            dict_users, dominence = nclass_skewness_mnist(dataset_train, args.num_users)
+            dict_users, dominance = nclass_skewness_mnist(dataset_train, args.num_users)
         elif args.iid == 2:
-            dict_users, dominence = complex_skewness_mnist(dataset_train, args.num_users,num_samples=args.local_bs)
+            dict_users, dominance = complex_skewness_mnist(dataset_train, args.num_users)
         else:
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
@@ -61,9 +61,9 @@ if __name__ == '__main__':
         if args.iid == 0:
             dict_users, dominance = cifar_iid(dataset_train, args.num_users)
         elif args.iid == 1:
-            dict_users, dominence = nclass_skewness_cifar(dataset_train, args.num_users)
+            dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users)
         elif args.iid == 2:
-            dict_users, dominence = complex_skewness_cifar(dataset_train,args.num_users)
+            dict_users, dominance = complex_skewness_cifar(dataset_train,args.num_users)
         else:
             exit("Bad argument: iid")
     else:
@@ -151,7 +151,7 @@ if __name__ == '__main__':
         rewards = {}
         for i in range(len(l2n)):
             clientidx = idxs_users[i]
-            rewards[clientidx] = l2n[i] * -1 * args.local_bs
+            rewards[clientidx] = l2n[i] * -1 * numsamples
 
             # write log
             l2eval[iter-2][clientidx] = l2n[i]
@@ -167,11 +167,11 @@ if __name__ == '__main__':
         # Log reward and domi
         if iter > 0 and iter % args.testing == 0 and args.testing > 0:
             avgl2n = sum(l2n)/len(l2n)
-            rewardlog.append(-1*args.local_bs*avgl2n)
+            rewardlog.append(-1*numsamples*avgl2n)
 
             domi = []
             for client in idxs_users:
-                domi.append(dominence[client])
+                domi.append(dominance[client])
             domilog.append(float(sum(domi)/len(domi)))
 
 
@@ -218,11 +218,11 @@ if __name__ == '__main__':
         for i in range(len(domilog)):
             content = str(domilog[i]) + '\n'
             fp.write(content)
-        print('Dominence log written')
+        print('dominance log written')
 
     '''
-    dominence = np.expand_dims(dominence,0)
-    l2eval = np.concatenate((dominence,l2eval),axis=0)
+    dominance = np.expand_dims(dominance,0)
+    l2eval = np.concatenate((dominance,l2eval),axis=0)
     writer = pd.ExcelWriter('l2eval.xlsx')
     l2pandas = pd.DataFrame(l2eval)
     l2pandas.to_excel(writer, 'sheet_1', float_format='%f')
