@@ -35,7 +35,9 @@ def mnist_iid(dataset, num_users=200,num_samples=300):
     idxs = idxs_labels[0,:]
 
     dominances = []
-    counts = [0] * class_num
+    counts = {}
+    for i in range(class_num):
+        counts[i] = 0
 
     for i in range(num_users):
         subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=0)
@@ -56,7 +58,7 @@ def cifar_iid(dataset, num_users=200, num_samples=250):
     data_num = 50000
     class_num = 10
     idxs = np.arange(data_num)
-    labels = dataset.train_labels.numpy()
+    labels = np.array(dataset.targets)
     dict_users = {}
 
     overalldist = [0] * class_num
@@ -74,7 +76,9 @@ def cifar_iid(dataset, num_users=200, num_samples=250):
     idxs = idxs_labels[0,:]
 
     dominances = []
-    counts = [0] * class_num
+    counts = {}
+    for i in range(class_num):
+        counts[i] = 0
 
     for i in range(num_users):
         subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=0)
@@ -298,7 +302,7 @@ def spell_partition(partition, labels,dominence=None):
 
 if __name__ == '__main__':
     
-    dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True,
+    dataset_train = datasets.MNIST('../../data/mnist/', train=True, download=True,
                                    transform=transforms.Compose([
                                        transforms.ToTensor(),
                                        transforms.Normalize((0.1307,), (0.3081,))

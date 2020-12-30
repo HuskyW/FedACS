@@ -54,3 +54,25 @@ class LocalUpdate(object):
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
         return net.state_dict(), sum(epoch_loss) / len(epoch_loss)
 
+class SingalBgdUpdate(object):
+    def __init__(self, args, data_num, dataset=None, idxs=None):
+        self.args = args
+        self.loss_func = nn.CrossEntropyLoss()
+        self.selected_clients = []
+        self.data_num = data_num
+        self.ldr_train = DataLoader(DatasetSplit(dataset, idxs), batch_size=data_num, shuffle=False)
+        self.newLR = self.args.lr * self.args.local_ep / 2
+
+    def train(self, net):
+        net.train()
+        # train and update
+        optimizer = torch.optim.SGD(net.parameters(), lr=self.newLR, momentum=0)
+        for batch_idx, (images, labels) in enumerate(self.ldr_train):
+            images, labels = images.to(self.args.device), labels.to(self.args.device)
+            net.zero_grad()
+            log_probs = net(images)
+            loss = self.loss_func(log_probs, labels)
+            loss.backward()
+            optimizer.step()
+        return net.state_dict()
+

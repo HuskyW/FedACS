@@ -74,3 +74,15 @@ def scaledL2NormEvaluate(w_old,w,scale):
             l2norms[i] += np.linalg.norm(diff,ord=2)
 
     return l2norms
+
+
+def FA_round(args,iter):
+    if args.faf < 0:
+        return False
+    
+    initRounds = int(1/args.frac)
+    if iter <= 2*initRounds:
+        return True
+    
+    if iter <= 5*initRounds and iter % args.faf == 0:
+        return True
