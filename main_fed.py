@@ -129,6 +129,7 @@ if __name__ == '__main__':
         if not args.all_clients:
             w_locals = []
         m = max(int(args.frac * args.num_users), 1)
+        eva_locals = []
 
 
         # client selection
@@ -139,28 +140,27 @@ if __name__ == '__main__':
 
         
         for idx in idxs_users:
-            if FA_round(args,iter) is False:
-                local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx],locallr=locallr)
-            else:
-                local = SingleBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+            local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx],locallr=locallr)
             w, loss, newlr = local.train(net=copy.deepcopy(net_glob).to(args.device))
             if args.all_clients:
                 w_locals[idx] = copy.deepcopy(w)
             else:
                 w_locals.append(copy.deepcopy(w))
             loss_locals.append(copy.deepcopy(loss))
+
+
+            if FA_round(args,iter) is True:
+                eva = SingleBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+                evaw, loss = eva.train(net=copy.deepcopy(net_glob).to(args.device))
+                eva_locals.append(copy.deepcopy(w))
+
         # update global weights
         w_glob = FedAvg(w_locals)
 
-        # Whether we need to evaluate L2 norm?
-        needEvaluate = False
-        if iter > 0 and iter % args.testing == 0 and args.testing > 0:
-            needEvaluate = True
-
         # Evaluate L2 norm and update rewards
         
-        if needEvaluate is True:
-            l2n = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(w_locals))
+        if FA_round(args,iter) is True:
+            l2n = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(eva_locals))
             rewards = {}
             for i in range(len(l2n)):
                 clientidx = idxs_users[i]
@@ -169,19 +169,20 @@ if __name__ == '__main__':
                 # write log
                 l2eval[iter-2][clientidx] = l2n[i]
             
-            if args.client_sel != 0 and FA_round(args,iter) is True:
+            if args.client_sel != 0:
                 bandit.updateWithRewards(rewards)
+            
+            if iter > 0 and iter % args.testing == 0 and args.testing > 0:
+                avgl2n = sum(l2n)/len(l2n)
+                rewardlog.append(-1*numsamples*avgl2n)
         
 
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
         net_glob.cuda()
         
-        # Log reward and domi
+        # Log domi
         if iter > 0 and iter % args.testing == 0 and args.testing > 0:
-            avgl2n = sum(l2n)/len(l2n)
-            rewardlog.append(-1*numsamples*avgl2n)
-
             domi = []
             for client in idxs_users:
                 domi.append(dominance[client])

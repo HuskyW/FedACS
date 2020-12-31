@@ -14,7 +14,7 @@ def args_parser():
     parser.add_argument('--local_bs', type=int, default=300, help="local batch size: B, it is also number of sample in one client")
     parser.add_argument('--bs', type=int, default=128, help="test batch size")
     parser.add_argument('--lr', type=float, default=0.15, help="learning rate")
-    parser.add_argument('--momentum', type=float, default=0, help="SGD momentum (default: 0.5)")
+    parser.add_argument('--momentum', type=float, default=0.5, help="SGD momentum (default: 0.5)")
     parser.add_argument('--split', type=str, default='user', help="train-test split type, user or sample")
 
     # model arguments
@@ -43,7 +43,7 @@ def args_parser():
     parser.add_argument('--client_sel', type=int, default=0, help="Client selection, 0:random, 1:UcbQr bandit, 2:MoveAvg bandit")
     parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")
     parser.add_argument('--faf', type=int, default=-1, help="How offen FA round is used")
-    parser.add_argument('--lrd', type=float, default=1, help="Learning rate decay")
+    parser.add_argument('--lrd', type=float, default=0.993, help="Learning rate decay")
 
     args = parser.parse_args()
     return args
