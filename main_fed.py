@@ -48,11 +48,11 @@ if __name__ == '__main__':
         dataset_test = datasets.MNIST('../data/mnist/', train=False, download=True, transform=trans_mnist)
         # sample users
         if args.iid == 0:
-            dict_users,dominance = mnist_iid(dataset_train, args.num_users)
+            dict_users,dominance = mnist_iid(dataset_train, args.num_users, numsamples)
         elif args.iid == 1:
-            dict_users, dominance = nclass_skewness_mnist(dataset_train, args.num_users)
+            dict_users, dominance = nclass_skewness_mnist(dataset_train, args.num_users, numsamples)
         elif args.iid == 2:
-            dict_users, dominance = complex_skewness_mnist(dataset_train, args.num_users)
+            dict_users, dominance = complex_skewness_mnist(dataset_train, args.num_users, numsamples)
         else:
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
@@ -60,11 +60,11 @@ if __name__ == '__main__':
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
         if args.iid == 0:
-            dict_users, dominance = cifar_iid(dataset_train, args.num_users)
+            dict_users, dominance = cifar_iid(dataset_train, args.num_users, numsamples)
         elif args.iid == 1:
-            dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users)
+            dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users, numsamples)
         elif args.iid == 2:
-            dict_users, dominance = complex_skewness_cifar(dataset_train,args.num_users)
+            dict_users, dominance = complex_skewness_cifar(dataset_train,args.num_users, numsamples)
         else:
             exit("Bad argument: iid")
     else:
@@ -110,6 +110,7 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
+    locallr = args.lr
 
     if args.testing > 0:
         testacc = []
@@ -139,10 +140,10 @@ if __name__ == '__main__':
         
         for idx in idxs_users:
             if FA_round(args,iter) is False:
-                local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
+                local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx],locallr=locallr)
             else:
                 local = SingleBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
-            w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
+            w, loss, newlr = local.train(net=copy.deepcopy(net_glob).to(args.device))
             if args.all_clients:
                 w_locals[idx] = copy.deepcopy(w)
             else:
@@ -155,8 +156,6 @@ if __name__ == '__main__':
         needEvaluate = False
         if iter > 0 and iter % args.testing == 0 and args.testing > 0:
             needEvaluate = True
-        if args.client_sel != 0 and FA_round(args,iter) is True:
-            needEvaluate = True  
 
         # Evaluate L2 norm and update rewards
         
@@ -197,8 +196,11 @@ if __name__ == '__main__':
             net_glob.train()
 
             testacc.append(float(acc_test))
+
+        # Learning rate decay
+        locallr = newlr
         
-    # Rounds terminals
+    # =====Rounds terminals=====
     logidx = str(args.log_idx)
 
     if args.log_idx < 0:

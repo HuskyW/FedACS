@@ -24,17 +24,21 @@ class DatasetSplit(Dataset):
 
 
 class LocalUpdate(object):
-    def __init__(self, args, dataset=None, idxs=None):
+    def __init__(self, args, dataset=None, idxs=None, locallr=None):
         self.args = args
         self.loss_func = nn.CrossEntropyLoss()
         self.selected_clients = []
         self.ldr_train = DataLoader(DatasetSplit(dataset, idxs), batch_size=self.args.local_bs, shuffle=True)
+        self.lr = locallr
+        if locallr is None:
+            self.lr = self.args.lr
 
     def train(self, net):
         net.train()
         # train and update
-        optimizer = torch.optim.SGD(net.parameters(), lr=self.args.lr, momentum=self.args.momentum)
-
+        optimizer = torch.optim.SGD(net.parameters(), lr=self.lr, momentum=self.args.momentum)
+        mylambda = lambda epoch: self.args.lrd ** epoch
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=mylambda)
         epoch_loss = []
         for iter in range(self.args.local_ep):
             batch_loss = []
@@ -51,8 +55,10 @@ class LocalUpdate(object):
                                100. * batch_idx / len(self.ldr_train), loss.item()))
                 batch_loss.append(loss.item())
 
+            scheduler.step()
+            self.lr = self.lr * self.args.lrd
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
-        return net.state_dict(), sum(epoch_loss) / len(epoch_loss)
+        return net.state_dict(), sum(epoch_loss) / len(epoch_loss), self.lr
 
 class SingleBgdUpdate(object):
     def __init__(self, args, data_num=None, dataset=None, idxs=None):
@@ -63,12 +69,11 @@ class SingleBgdUpdate(object):
         if data_num is None:
             self.data_num = len(idxs)
         self.ldr_train = DataLoader(DatasetSplit(dataset, idxs), batch_size=data_num, shuffle=False)
-        self.newLR = self.args.lr * self.args.local_ep / 2
 
     def train(self, net):
         net.train()
         # train and update
-        optimizer = torch.optim.SGD(net.parameters(), lr=self.newLR, momentum=0)
+        optimizer = torch.optim.SGD(net.parameters(), lr=self.args.lr, momentum=0)
         for batch_idx, (images, labels) in enumerate(self.ldr_train):
             images, labels = images.to(self.args.device), labels.to(self.args.device)
             net.zero_grad()
