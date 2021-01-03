@@ -212,7 +212,7 @@ if __name__ == '__main__':
     logidx = str(args.log_idx)
 
     if args.log_idx < 0:
-        filepath = "acc.log"
+        filepath = "./save/acc.log"
     else:
         filepath = "./save/acc/"+logidx+'.log'
     
@@ -223,7 +223,7 @@ if __name__ == '__main__':
         print('Acc log written')
 
     if args.log_idx < 0:
-        filepath = "reward.log"
+        filepath = "./save/reward.log"
     else:
         filepath = "./save/reward/"+logidx+'.log'
 
@@ -234,7 +234,7 @@ if __name__ == '__main__':
         print('Reward log written')
 
     if args.log_idx < 0:
-        filepath = "domi.log"
+        filepath = "./save/domi.log"
     else:
         filepath = "./save/domi/"+logidx+'.log'
 
