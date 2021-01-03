@@ -36,7 +36,7 @@ class LocalUpdate(object):
     def train(self, net):
         net.train()
         # train and update
-        optimizer = torch.optim.SGD(net.parameters(), lr=self.lr, momentum=self.args.momentum)
+        optimizer = torch.optim.SGD(net.parameters(), lr=self.lr, momentum=self.args.momentum,weight_decay=5e-4)
         mylambda = lambda epoch: self.args.lrd ** epoch
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=mylambda)
         epoch_loss = []

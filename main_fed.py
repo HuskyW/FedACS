@@ -23,6 +23,7 @@ from models.test import test_img
 from utils.evaluate import l2NormEvaluate, FA_round
 from models.Bound import estimateBounds
 from models.Bandit import UcbqrBandit, Rexp3Bandit, MoveAvgBandit
+from models.dla_simple import SimpleDLA
 
 
 if __name__ == '__main__':
@@ -78,6 +79,8 @@ if __name__ == '__main__':
         net_glob = torchvision.models.vgg16(pretrained=False)
     elif args.model == 'resnet18' and args.dataset == 'cifar':
         net_glob = torchvision.models.resnet18(pretrained=False)
+    elif args.model == 'sdla' and args.dataset == 'cifar':
+        net_glob = SimpleDLA.to(args.device)
     elif args.model == 'cnn' and args.dataset == 'cifar':
         net_glob = CNNCifar(args=args).to(args.device)
     elif args.model == 'cnn' and args.dataset == 'mnist':
