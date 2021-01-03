@@ -263,7 +263,136 @@ class MoveAvgBandit(Bandit):
             self.lastinit = 2
         return
 
-def tryBandit(bandit,iter,verbose=False):
+class MultiRUcb(Bandit):
+    def __init__(self,num_clients,num_picked):
+        self.num_picked = num_picked
+        self.num_clients = num_clients
+        self.alpha = 0.8
+        self.w = np.zeros((num_clients,num_clients))
+        self.b = []
+        self.iter = 1
+        for i in range(num_picked):
+            self.b.append(set())
+    
+    def requireArms(self,num_picked):
+        u = self.__deriveU()
+        reserved = set()
+        return self.__armsRec(num_picked,u,reserved,0)
+
+    def updateWithRewards(self,rewards):
+        self.iter += 1
+        for i in rewards.keys():
+            for j in rewards.keys():
+                if i == j:
+                    continue
+                if rewards[i] > rewards[j]:
+                    self.w[i][j] += 1
+
+
+    def __armsRec(self,num_picked,u,reserved,idx):
+        num_left = num_picked - len(reserved)
+        if idx >= num_picked:
+            print('Error')
+        c = self.__deriveC(reserved,u)
+        if len(c) == 0:
+            print("c=0!")
+        self.b[idx] = self.b[idx] & c
+        if len(c) <= 1:
+            self.b[idx] = c
+            reserved = reserved | c
+            return self.__armsRec(num_picked,u,reserved.copy(),idx+1)
+        if len(c) < num_left:
+            reserved = reserved | c
+            return self.__armsRec(num_picked,u,reserved.copy(),idx+1)
+        if len(c) == num_left:
+            reserved = reserved | c
+            return reserved
+        if np.random.ranf() > 0.5:
+            reserved = reserved | self.b[idx]
+            new_num_left = num_left = num_picked - len(reserved)
+            c = c - self.b[idx]
+            draw = np.random.choice(list(c),new_num_left,replace=False)
+            return reserved | set(draw)
+        c = c - self.b[idx]
+        draw = np.random.choice(list(c),num_left,replace=False)
+        return reserved | set(draw)
+
+    
+    def __deriveC(self,reserved,u):
+        c = set()
+        for i in range(self.num_clients):
+            if i in reserved:
+                continue
+            select = True
+            for j in range(self.num_clients):
+                if j in reserved:
+                    continue
+                if u[i][j] < 0.5:
+                    select = False
+                    break
+            if select:
+                c.add(i)
+
+        return c
+
+    def __deriveU(self):
+        shape = self.w.shape
+        udown = np.zeros(shape)
+        udown = self.w + self.w.T
+        u1 = self.__specDiv(self.w,udown)
+        u2up = np.ones(shape)
+        u2up = u2up * (self.alpha * math.log(self.iter))
+        u2 = np.sqrt(self.__specDiv(u2up,udown))
+        ans = u1 + u2
+        for i in range(shape[0]):
+            ans[i][i] = 0.5
+        return ans
+
+    def __specDiv(self,a,b):
+        shape = a.shape
+        ans = np.zeros(shape)
+        width = shape[0]
+        height = shape[1]
+        for i in range(width):
+            for j in range(height):
+                if b[i][j] == 0:
+                    ans[i][j] = 1
+                else:
+                    ans[i][j] = a[i][j] / b[i][j]
+        return ans
+
+
+class SelfSparringBandit(Bandit):
+    def __init__(self,num_clients):
+        self.num_clients = num_clients
+        self.s = [0] * num_clients
+        self.f = [0] * num_clients
+        self.lr = 1
+    
+    def requireArms(self,num_picked):
+        candidates = [i for i in range(self.num_clients)]
+        picked = []
+        for j in range(num_picked):
+            record = {}
+            for candidate in candidates:
+                record[candidate] = np.random.beta(self.s[candidate]+1,self.f[candidate]+1)
+            sortedRecord = sorted(record.items(),key=lambda x:x[1],reverse=True)
+            winner = sortedRecord[0][0]
+            picked.append(winner)
+            candidates.remove(winner)
+        return np.array(picked,dtype='int')
+
+    def updateWithRewards(self,rewards):
+        for i in rewards.keys():
+            for j in rewards.keys():
+                if i == j:
+                    continue
+                if rewards[i] > rewards[j]:
+                    self.s[i] += self.lr
+                    self.f[j] += self.lr
+        return
+
+def tryBandit(bandit,iter,verbose=True):
     record = []
     for r in range(iter):
         arms = bandit.requireArms(10)
@@ -283,16 +412,13 @@ def tryBandit(bandit,iter,verbose=False):
     return float(sum(record)/len(record))
 
 if __name__ == "__main__":
-    bandit1 = UcbqrBandit(200)
-    bandit2 = Rexp3Bandit(200)
-    bandit3 = MoveAvgBandit(200)
 
     record1 = []
-    record3 = []
-    for i in range(100):
+    for i in range(10):
+        bandit1 = SelfSparringBandit(200)
+        bandit2 = UcbqrBandit(200)
+        bandit3 = MoveAvgBandit(200)
         print("Try: %3d" % (i+1))
         record1.append(tryBandit(bandit1,500))
-        record3.append(tryBandit(bandit3,500))
 
-    print("Ucpqr : %.1f" % (sum(record1)/len(record1)) )
-    print("Movavg: %.1f" % (sum(record3)/len(record3)) )
+    print("ss : %.1f" % (sum(record1)/len(record1)) )

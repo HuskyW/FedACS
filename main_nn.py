@@ -14,6 +14,7 @@ from torchvision import datasets, transforms
 
 from utils.options import args_parser
 from models.Nets import MLP, CNNMnist, CNNCifar
+from models.test import test_img
 
 
 def test(net_g, data_loader):
@@ -46,7 +47,7 @@ if __name__ == '__main__':
 
     # load dataset and split users
     if args.dataset == 'mnist':
-        dataset_train = datasets.MNIST('./data/mnist/', train=True, download=True,
+        dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
@@ -56,7 +57,7 @@ if __name__ == '__main__':
         transform = transforms.Compose(
             [transforms.ToTensor(),
              transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        dataset_train = datasets.CIFAR10('./data/cifar', train=True, transform=transform, target_transform=None, download=True)
+        dataset_train = datasets.CIFAR10('../data/cifar', train=True, transform=transform, target_transform=None, download=True)
         img_size = dataset_train[0][0].shape
     else:
         exit('Error: unrecognized dataset')
@@ -78,8 +79,9 @@ if __name__ == '__main__':
     # training
     optimizer = optim.SGD(net_glob.parameters(), lr=args.lr, momentum=args.momentum)
     train_loader = DataLoader(dataset_train, batch_size=64, shuffle=True)
-
-    list_loss = []
+    trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
+    dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
     net_glob.train()
     for epoch in range(args.epochs):
         batch_loss = []
@@ -97,15 +99,22 @@ if __name__ == '__main__':
             batch_loss.append(loss.item())
         loss_avg = sum(batch_loss)/len(batch_loss)
         print('\nTrain loss:', loss_avg)
-        list_loss.append(loss_avg)
 
+        if epoch % args.testing == 0 and args.testing > 0:
+            # test and log accuracy
+            net_glob.eval()
+            acc_test, loss_test = test_img(net_glob, dataset_test, args)
+            print("Round {:3d}, Testing accuracy: {:.2f}".format(epoch, acc_test))
+            net_glob.train()
+
+    '''
     # plot loss
     plt.figure()
     plt.plot(range(len(list_loss)), list_loss)
     plt.xlabel('epochs')
     plt.ylabel('train loss')
     plt.savefig('./log/nn_{}_{}_{}.png'.format(args.dataset, args.model, args.epochs))
-
+    '''
     # testing
     if args.dataset == 'mnist':
         dataset_test = datasets.MNIST('./data/mnist/', train=False, download=True,
