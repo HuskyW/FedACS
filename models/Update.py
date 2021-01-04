@@ -37,8 +37,6 @@ class LocalUpdate(object):
         net.train()
         # train and update
         optimizer = torch.optim.SGD(net.parameters(), lr=self.lr, momentum=self.args.momentum,weight_decay=5e-4)
-        mylambda = lambda epoch: self.args.lrd ** epoch
-        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=mylambda)
         epoch_loss = []
         for iter in range(self.args.local_ep):
             batch_loss = []
@@ -55,8 +53,10 @@ class LocalUpdate(object):
                                100. * batch_idx / len(self.ldr_train), loss.item()))
                 batch_loss.append(loss.item())
 
-            scheduler.step()
             self.lr = self.lr * self.args.lrd
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = self.lr
+
             epoch_loss.append(sum(batch_loss)/len(batch_loss))
         return net.state_dict(), sum(epoch_loss) / len(epoch_loss), self.lr
 
