@@ -57,9 +57,19 @@ if __name__ == '__main__':
         else:
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
-        trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
-        dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+        dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=transform_train)
+        dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=transform_test)
         if args.iid == 0:
             dict_users, dominance = cifar_iid(dataset_train, args.num_users, numsamples)
         elif args.iid == 1:
