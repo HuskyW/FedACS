@@ -80,7 +80,7 @@ if __name__ == '__main__':
     elif args.model == 'resnet18' and args.dataset == 'cifar':
         net_glob = torchvision.models.resnet18(pretrained=False)
     elif args.model == 'sdla' and args.dataset == 'cifar':
-        net_glob = SimpleDLA.to(args.device)
+        net_glob = SimpleDLA().to(args.device)
     elif args.model == 'cnn' and args.dataset == 'cifar':
         net_glob = CNNCifar(args=args).to(args.device)
     elif args.model == 'cnn' and args.dataset == 'mnist':
