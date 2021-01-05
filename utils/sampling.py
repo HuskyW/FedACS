@@ -322,7 +322,7 @@ if __name__ == '__main__':
     trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     dataset_train = datasets.CIFAR10('../../data/cifar', train=True, download=True, transform=trans_cifar)
     num = 200
-    d,domi = cifar_iid(dataset_train, num)
-    #spell_partition(d,np.array(dataset_train.targets),domi)
-    spell_data_usage(d,50000)
+    d,domi = complex_skewness_cifar(dataset_train, num)
+    spell_partition(d,np.array(dataset_train.targets),domi)
+    #spell_data_usage(d,50000)
     

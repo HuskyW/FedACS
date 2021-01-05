@@ -68,7 +68,7 @@ class SingleBgdUpdate(object):
         self.data_num = data_num
         if data_num is None:
             self.data_num = len(idxs)
-        self.ldr_train = DataLoader(DatasetSplit(dataset, idxs), batch_size=data_num, shuffle=False)
+        self.ldr_train = DataLoader(DatasetSplit(dataset, idxs), batch_size=self.data_num, shuffle=True)
 
     def train(self, net):
         net.train()

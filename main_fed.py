@@ -22,7 +22,7 @@ from models.test import test_img
 
 from utils.evaluate import l2NormEvaluate, FA_round
 from models.Bound import estimateBounds
-from models.Bandit import UcbqrBandit, Rexp3Bandit, MoveAvgBandit
+from models.Bandit import SelfSparringBandit, Rexp3Bandit, MoveAvgBandit
 from models.dla_simple import SimpleDLA
 
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     if args.client_sel == 0:
         pass
     elif args.client_sel == 1:
-        bandit = UcbqrBandit(args.num_users)
+        bandit = SelfSparringBandit(args.num_users)
     elif args.client_sel == 2:
         bandit = MoveAvgBandit(args.num_users)
     else:
@@ -168,8 +168,8 @@ if __name__ == '__main__':
 
             if FA_round(args,iter) is True:
                 eva = SingleBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
-                evaw, loss = eva.train(net=copy.deepcopy(net_glob).to(args.device))
-                eva_locals.append(copy.deepcopy(w))
+                evaw = eva.train(net=copy.deepcopy(net_glob).to(args.device))
+                eva_locals.append(copy.deepcopy(evaw))
 
         # update global weights
         w_glob = FedAvg(w_locals)
@@ -212,6 +212,7 @@ if __name__ == '__main__':
             acc_test, loss_test = test_img(net_glob, dataset_test, args)
             print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
             net_glob.train()
+            print("Dominance: %.4f" % float(sum(domi)/len(domi)))
 
             testacc.append(float(acc_test))
 

@@ -65,6 +65,9 @@ def l2NormEvaluate(w_old,w,replace_avg=None):
 def FA_round(args,iter):
     if args.faf < 0:
         return False
+
+    if args.faf == 0:
+        return True
     
     initRounds = int(1/args.frac)
     if iter <= 2*initRounds:
