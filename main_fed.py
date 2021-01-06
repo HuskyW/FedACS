@@ -109,9 +109,9 @@ if __name__ == '__main__':
     if args.client_sel == 0:
         pass
     elif args.client_sel == 1:
-        bandit = SelfSparringBandit(args.num_users)
+        bandit = SelfSparringBandit(args)
     elif args.client_sel == 2:
-        bandit = MoveAvgBandit(args.num_users)
+        bandit = MoveAvgBandit(args)
     else:
         print("Bad Argument: client_sel")
         exit(-1)
@@ -189,7 +189,7 @@ if __name__ == '__main__':
             if args.client_sel != 0:
                 bandit.updateWithRewards(rewards)
             
-            if iter > 0 and iter % args.testing == 0 and args.testing > 0:
+            if iter % args.testing == 0 and args.testing > 0:
                 avgl2n = sum(l2n)/len(l2n)
                 rewardlog.append(-1*numsamples*avgl2n)
         
@@ -199,7 +199,7 @@ if __name__ == '__main__':
         net_glob.cuda()
         
         # Log domi
-        if iter > 0 and iter % args.testing == 0 and args.testing > 0:
+        if iter % args.testing == 0 and args.testing > 0:
             domi = []
             for client in idxs_users:
                 domi.append(dominance[client])

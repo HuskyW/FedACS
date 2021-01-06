@@ -44,6 +44,7 @@ def args_parser():
     parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")
     parser.add_argument('--faf', type=int, default=-1, help="How offen FA round is used, -1:never, 0:always")
     parser.add_argument('--lrd', type=float, default=0.993, help="Learning rate decay")
+    parser.add_argument('--extension', type=int, default=10, help="Candidate extension")
 
     args = parser.parse_args()
     return args

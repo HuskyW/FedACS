@@ -196,10 +196,10 @@ class UcbqrBandit(Bandit):
         return results
 
 class MoveAvgBandit(Bandit):
-    def __init__(self,num_clients):
-        self.num_clients = num_clients
+    def __init__(self,args):
+        self.num_clients = args.num_users
         self.avgs = {}
-        for client in range(num_clients):
+        for client in range(self.num_clients):
             self.avgs[client] = 0
         self.clients = np.arange(self.num_clients,dtype='int')
         self.uninitialized = [i for i in range(self.num_clients)]
@@ -363,16 +363,18 @@ class MultiRUcb(Bandit):
 
 
 class SelfSparringBandit(Bandit):
-    def __init__(self,num_clients):
-        self.num_clients = num_clients
-        self.s = [0] * num_clients
-        self.f = [0] * num_clients
+    def __init__(self,args):
+        self.num_clients = args.num_users
+        self.s = [0] * self.num_clients
+        self.f = [0] * self.num_clients
         self.lr = 1
+        self.extension = args.extension
     
     def requireArms(self,num_picked):
+        num_candidate = int(num_picked * self.extension)
         candidates = [i for i in range(self.num_clients)]
         picked = []
-        for j in range(num_picked):
+        for j in range(num_candidate):
             record = {}
             for candidate in candidates:
                 record[candidate] = np.random.beta(self.s[candidate]+1,self.f[candidate]+1)
@@ -380,7 +382,7 @@ class SelfSparringBandit(Bandit):
             winner = sortedRecord[0][0]
             picked.append(winner)
             candidates.remove(winner)
-        return np.array(picked,dtype='int')
+        return np.random.choice(picked,num_picked,replace=False)
 
     def updateWithRewards(self,rewards):
         for i in rewards.keys():
