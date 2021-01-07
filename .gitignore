@@ -63,3 +63,4 @@ analysis/
 *.log
 
 .vscode
+*.sh

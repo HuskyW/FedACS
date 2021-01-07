@@ -191,6 +191,40 @@ def complex_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10
     
     return dict_users, dominances
 
+def strong_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10):
+    data_num = 50000
+    idxs = np.arange(data_num)
+    labels = np.array(dataset.targets)
+    dict_users = {}
+
+    overalldist = [0] * class_num
+    for i in range(len(labels)):
+        overalldist[labels[i]] += 1
+    overalldist.insert(0,0)
+    for i in range(1,class_num+1):
+        overalldist[i] += overalldist[i-1]
+    heads = overalldist.copy()
+    del[heads[class_num]]
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    dominances = []
+    counts = {}
+    for i in range(class_num):
+        counts[i] = 0
+
+    for i in range(num_users):
+        dominance = math.sqrt(random.uniform(0,1.0))
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    
+    return dict_users, dominances
+
 def nclass_client(heads,overalldist,idxs,counts,n=None,sampleNum=300,classNum=10):
     if n is None:
         draw = math.pow(random.uniform(0,1.0),4)

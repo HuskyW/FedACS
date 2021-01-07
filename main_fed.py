@@ -13,7 +13,7 @@ import torch
 import openpyxl
 import torchvision
 
-from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, complex_skewness_cifar, nclass_skewness_cifar, nclass_skewness_mnist
+from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, complex_skewness_cifar, nclass_skewness_cifar, nclass_skewness_mnist, strong_skewness_cifar
 from utils.options import args_parser
 from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -76,6 +76,8 @@ if __name__ == '__main__':
             dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users, numsamples)
         elif args.iid == 2:
             dict_users, dominance = complex_skewness_cifar(dataset_train,args.num_users, numsamples)
+        elif args.iid == 3:
+            dict_users, dominance = strong_skewness_cifar(dataset_train,args.num_users, numsamples)
         else:
             exit("Bad argument: iid")
     else:
