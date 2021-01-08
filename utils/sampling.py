@@ -217,7 +217,7 @@ def strong_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10)
         counts[i] = 0
 
     for i in range(num_users):
-        dominance = math.sqrt(random.uniform(0,1.0))
+        dominance = math.pow(random.uniform(0,1.0),1/2)
         subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance)
         dict_users[i] = subset
         dominances.append(domi)

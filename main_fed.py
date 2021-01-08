@@ -73,7 +73,9 @@ if __name__ == '__main__':
         if args.iid == 0:
             dict_users, dominance = cifar_iid(dataset_train, args.num_users, numsamples)
         elif args.iid == 1:
-            dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users, numsamples)
+            print("Dont use this IID")
+            exit(0)
+            #dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users, numsamples)
         elif args.iid == 2:
             dict_users, dominance = complex_skewness_cifar(dataset_train,args.num_users, numsamples)
         elif args.iid == 3:
