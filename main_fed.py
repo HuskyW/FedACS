@@ -42,6 +42,9 @@ if __name__ == '__main__':
         args.num_channels = 3
         numsamples = int(50000/args.num_users)
 
+    if args.num_data > 0:
+        numsamples = args.num_data
+
     # load dataset and split users
     if args.dataset == 'mnist':
         trans_mnist = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])

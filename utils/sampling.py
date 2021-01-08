@@ -40,7 +40,7 @@ def mnist_iid(dataset, num_users=200,num_samples=300):
         counts[i] = 0
 
     for i in range(num_users):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=0)
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=0,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)
 
@@ -81,7 +81,7 @@ def cifar_iid(dataset, num_users=200, num_samples=250):
         counts[i] = 0
 
     for i in range(num_users):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=0)
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=0,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)
 
@@ -105,7 +105,7 @@ def add_data(data,idxs,head,overall,group,num,counts):
     head[group] += filling
     return data
 
-def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sampleNum=300,classNum=10):
+def dominance_client(heads,overalldist,idxs,counts,sampleNum,classNum,dominance=None,dClass=None):
     if dominance is None:
         dominance = random.uniform(0,1.0)
     if dClass is None:
@@ -124,7 +124,7 @@ def dominance_client(heads,overalldist,idxs,counts,dominance=None,dClass=None,sa
     
     return result, dominance
 
-def complex_skewness_mnist(dataset, num_users=100, num_samples=300):
+def complex_skewness_mnist(dataset, num_users, num_samples):
     data_num = 60000
     class_num = 10
     idxs = np.arange(data_num)
@@ -151,14 +151,14 @@ def complex_skewness_mnist(dataset, num_users=100, num_samples=300):
         counts[i] = 0
 
     for i in range(num_users):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples)
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)
 
     
     return dict_users, dominances
 
-def complex_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10):
+def complex_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     data_num = 50000
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
@@ -184,14 +184,14 @@ def complex_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10
         counts[i] = 0
 
     for i in range(num_users):
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples)
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)
 
     
     return dict_users, dominances
 
-def strong_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10):
+def strong_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     data_num = 50000
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
@@ -218,7 +218,7 @@ def strong_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10)
 
     for i in range(num_users):
         dominance = math.pow(random.uniform(0,1.0),1/2)
-        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance)
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)
 
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     dataset_train = datasets.CIFAR10('../../data/cifar', train=True, download=True, transform=trans_cifar)
     num = 200
-    d,domi = complex_skewness_cifar(dataset_train, num)
+    d,domi = complex_skewness_cifar(dataset_train, num,num_samples=250)
     spell_partition(d,np.array(dataset_train.targets),domi)
     #spell_data_usage(d,50000)
     
