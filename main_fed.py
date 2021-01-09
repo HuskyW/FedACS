@@ -37,10 +37,12 @@ if __name__ == '__main__':
     # restore args
     if args.dataset == 'mnist':
         args.num_channels = 1
-        numsamples = int(60000/args.num_users)
+        allsamples = 60000
     if args.dataset == 'cifar':
         args.num_channels = 3
-        numsamples = int(50000/args.num_users)
+        allsamples = 50000
+    
+    numsamples = int(allsamples/args.num_users)
 
     if args.num_data > 0:
         numsamples = args.num_data
@@ -61,8 +63,6 @@ if __name__ == '__main__':
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
         transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])

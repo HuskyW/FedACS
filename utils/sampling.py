@@ -14,7 +14,7 @@ def mnist_iid(dataset, num_users=200,num_samples=300):
     :param num_users:
     :return: dict of image index
     """
-    data_num = 60000
+    data_num = len(dataset)
     class_num = 10
     idxs = np.arange(data_num)
     labels = dataset.train_labels.numpy()
@@ -55,7 +55,7 @@ def cifar_iid(dataset, num_users=200, num_samples=250):
     :param num_users:
     :return: dict of image index
     """
-    data_num = 50000
+    data_num = len(dataset)
     class_num = 10
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
@@ -100,6 +100,11 @@ def add_data(data,idxs,head,overall,group,num,counts):
     data = np.concatenate((data,idxs[head[group] : head[group]+remaining]))
     head[group] = overall[group]
 
+    # shuffle order of that group
+    temp = idxs[overall[group] : overall[group+1]]
+    random.shuffle(temp)
+    idxs[overall[group] : overall[group+1]] = temp
+
     filling = num - remaining
     data = np.concatenate((data,idxs[head[group] : head[group]+filling]))
     head[group] += filling
@@ -125,7 +130,7 @@ def dominance_client(heads,overalldist,idxs,counts,sampleNum,classNum,dominance=
     return result, dominance
 
 def complex_skewness_mnist(dataset, num_users, num_samples):
-    data_num = 60000
+    data_num = len(dataset)
     class_num = 10
     idxs = np.arange(data_num)
     labels = dataset.train_labels.numpy()
@@ -159,7 +164,7 @@ def complex_skewness_mnist(dataset, num_users, num_samples):
     return dict_users, dominances
 
 def complex_skewness_cifar(dataset, num_users, num_samples, class_num=10):
-    data_num = 50000
+    data_num = len(dataset)
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
     dict_users = {}
@@ -192,7 +197,7 @@ def complex_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     return dict_users, dominances
 
 def strong_skewness_cifar(dataset, num_users, num_samples, class_num=10):
-    data_num = 50000
+    data_num = len(dataset)
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
     dict_users = {}
@@ -250,7 +255,7 @@ def nclass_client(heads,overalldist,idxs,counts,n=None,sampleNum=300,classNum=10
     return result, n
 
 def nclass_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10):
-    data_num = 50000
+    data_num = len(dataset)
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
     dict_users = {}
@@ -283,7 +288,7 @@ def nclass_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10)
     return dict_users, dominances
 
 def nclass_skewness_mnist(dataset, num_users=200, num_samples=300, class_num=10):
-    data_num = 60000
+    data_num = len(dataset)
     class_num = 10
     idxs = np.arange(data_num)
     labels = dataset.train_labels.numpy()
@@ -354,9 +359,9 @@ if __name__ == '__main__':
     '''
     
     trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    dataset_train = datasets.CIFAR10('../../data/cifar', train=True, download=True, transform=trans_cifar)
+    dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
     num = 200
-    d,domi = complex_skewness_cifar(dataset_train, num,num_samples=250)
-    spell_partition(d,np.array(dataset_train.targets),domi)
-    #spell_data_usage(d,50000)
+    d,domi = complex_skewness_cifar(dataset_train, num,num_samples=5000)
+    #spell_partition(d,np.array(dataset_train.targets),domi)
+    spell_data_usage(d,50000)
     
