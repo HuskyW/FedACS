@@ -46,6 +46,7 @@ def args_parser():
     parser.add_argument('--lrd', type=float, default=0.993, help="Learning rate decay")
     parser.add_argument('--extension', type=int, default=10, help="Candidate extension")
     parser.add_argument('--num_data', type=int, default=-1, help="Number of data in each client, -1:auto")
+    parser.add_argument('--historical_rounds', type=int, default=0, help="How many rounds are remenbered by bandit for historical comparison? 0: never")
 
     args = parser.parse_args()
     return args

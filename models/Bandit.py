@@ -367,8 +367,10 @@ class SelfSparringBandit(Bandit):
         self.num_clients = args.num_users
         self.s = [0] * self.num_clients
         self.f = [0] * self.num_clients
-        self.lr = 1
+        self.lr = 0.2
         self.extension = args.extension
+        self.historical_rounds = args.historical_rounds
+        self.history = []
     
     def requireArms(self,num_picked):
         num_candidate = int(num_picked * self.extension)
@@ -385,13 +387,31 @@ class SelfSparringBandit(Bandit):
         return np.random.choice(picked,num_picked,replace=False)
 
     def updateWithRewards(self,rewards):
-        for i in rewards.keys():
-            for j in rewards.keys():
+        x = list(rewards.items())
+        y = list(rewards.items())
+
+        # x is current round rewards, y includes historical records (no duplicate clients)
+
+        usedclients = set(rewards.keys())
+
+        for hist in self.history:
+            for onerecord in hist:
+                if onerecord[0] not in usedclients:
+                    usedclients.add(onerecord[0])
+                    y.append(onerecord)
+        
+        self.history.append(x.copy())
+        if len(self.history) > self.historical_rounds:
+            del self.history[0]
+
+        for i,ir in x:
+            for j, jr in y:
                 if i == j:
                     continue
-                if rewards[i] > rewards[j]:
+                if ir > jr:
                     self.s[i] += self.lr
-                    self.f[j] += self.lr
+                else:
+                    self.f[i] += self.lr
         return
 
 def tryBandit(bandit,iter,verbose=True):
@@ -413,13 +433,18 @@ def tryBandit(bandit,iter,verbose=True):
 
     return float(sum(record)/len(record))
 
-if __name__ == "__main__":
 
+class argument():
+    def __init__(self):
+        self.extension = 1
+        self.num_users = 200
+        self.historical_rounds = 5
+
+if __name__ == "__main__":
+    args = argument()
     record1 = []
     for i in range(10):
-        bandit1 = SelfSparringBandit(200)
-        bandit2 = UcbqrBandit(200)
-        bandit3 = MoveAvgBandit(200)
+        bandit1 = SelfSparringBandit(args)
         print("Try: %3d" % (i+1))
         record1.append(tryBandit(bandit1,500))
 
