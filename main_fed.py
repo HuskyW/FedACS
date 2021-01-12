@@ -189,13 +189,18 @@ if __name__ == '__main__':
                 evaw = eva.train(net=copy.deepcopy(net_glob).to(args.device))
                 eva_locals.append(copy.deepcopy(evaw))
 
-        # update global weights
-        w_glob = FedAvg(w_locals)
-
         # Evaluate L2 norm and update rewards
-        
         if FA_round(args,iter) is True:
             l2n = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(eva_locals))
+            
+            if args.historical_rounds > 0:
+                w_cutted = []
+                l2nThres = args.historical_rounds * np.mean(l2n)
+                for i in range(len(l2n)):
+                    if l2n[i] < l2nThres:
+                        w_cutted.append(w_locals[i])
+                w_locals = w_cutted
+
             rewards = {}
             for i in range(len(l2n)):
                 clientidx = idxs_users[i]
@@ -210,7 +215,9 @@ if __name__ == '__main__':
             if iter % args.testing == 0 and args.testing > 0:
                 avgl2n = sum(l2n)/len(l2n)
                 rewardlog.append(-1*numsamples*avgl2n)
-        
+
+        # update global weights
+        w_glob = FedAvg(w_locals)
 
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
@@ -236,6 +243,8 @@ if __name__ == '__main__':
             print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
             net_glob.train()
             print("Dominance ranking: " + str(domirankrecord))
+            if len(w_locals) < len(idxs_users):
+                print("%d clients are removed" % (len(idxs_users)-len(w_locals)))
 
             testacc.append(float(acc_test))
 
