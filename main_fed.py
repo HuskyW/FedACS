@@ -63,6 +63,8 @@ if __name__ == '__main__':
             exit("Bad argument: iid")
     elif args.dataset == 'cifar':
         transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
@@ -122,6 +124,15 @@ if __name__ == '__main__':
     else:
         print("Bad Argument: client_sel")
         exit(-1)
+
+    # ranking of dominance
+    domiranktemp = {}
+    domirank = {}
+    for i in range(args.num_users):
+        domiranktemp[i] = dominance[i]
+    DRTsort = sorted(domiranktemp.items(),key=lambda x:x[1],reverse=False)
+    for i in range(len(DRTsort)):
+        domirank[DRTsort[i][0]] = i
 
     # copy weights
     w_glob = net_glob.state_dict()
@@ -212,6 +223,11 @@ if __name__ == '__main__':
                 domi.append(dominance[client])
             domilog.append(float(sum(domi)/len(domi)))
 
+            domirankrecord = []
+            for client in idxs_users:
+                domirankrecord.append(domirank[client])
+            domirankrecord.sort()
+
 
             # test and log accuracy
             
@@ -219,7 +235,7 @@ if __name__ == '__main__':
             acc_test, loss_test = test_img(net_glob, dataset_test, args)
             print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
             net_glob.train()
-            print("Dominance: %.4f" % float(sum(domi)/len(domi)))
+            print("Dominance ranking: " + str(domirankrecord))
 
             testacc.append(float(acc_test))
 
