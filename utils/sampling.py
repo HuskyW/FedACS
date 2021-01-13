@@ -234,6 +234,50 @@ def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     return dict_users, dominances
 
 
+def dirichlet_client(heads,overalldist,idxs,counts,sampleNum,classNum,alpha):
+    alphatemp = [alpha] * 10
+    classdist = list(np.random.dirichlet(alpha=alphatemp))
+    for i in range(len(classdist)):
+        classdist[i] = int(classdist[i] * sampleNum)
+    samplesleft = sampleNum - sum(classdist)
+    drawclass = int(np.random.randint(classNum))
+    classdist[drawclass] += samplesleft
+
+    result = np.array([], dtype='int64')
+    for i in range(classNum):
+        result = add_data(result,idxs,heads,overalldist,i,classdist[i],counts)
+    return result
+
+
+def dirichlet_skewness_cifar(dataset, num_users, num_samples, class_num=10):
+    data_num = len(dataset)
+    idxs = np.arange(data_num)
+    labels = np.array(dataset.targets)
+    dict_users = {}
+
+    overalldist = [0] * class_num
+    for i in range(len(labels)):
+        overalldist[labels[i]] += 1
+    overalldist.insert(0,0)
+    for i in range(1,class_num+1):
+        overalldist[i] += overalldist[i-1]
+    heads = overalldist.copy()
+    del[heads[class_num]]
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    counts = {}
+    for i in range(class_num):
+        counts[i] = 0
+
+    for i in range(num_users):
+        subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=10)
+        dict_users[i] = subset
+
+    return dict_users
 
 def spell_partition(partition, labels,dominence=None):
 
@@ -275,7 +319,8 @@ if __name__ == '__main__':
     trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
     num = 200
-    d,domi = complex_skewness_cifar(dataset_train, num,num_samples=2000)
-    #spell_partition(d,np.array(dataset_train.targets),domi)
+    #d,domi = uni_skewness_cifar(dataset_train, num,num_samples=2000)
+    d = dirichlet_skewness_cifar(dataset_train, num,num_samples=2000)
+    spell_partition(d,np.array(dataset_train.targets))
     spell_data_usage(d,50000)
     
