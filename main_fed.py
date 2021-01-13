@@ -13,7 +13,7 @@ import torch
 import openpyxl
 import torchvision
 
-from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, complex_skewness_cifar, nclass_skewness_cifar, nclass_skewness_mnist, strong_skewness_cifar
+from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar
 from utils.options import args_parser
 from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar

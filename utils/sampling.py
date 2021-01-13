@@ -163,7 +163,7 @@ def complex_skewness_mnist(dataset, num_users, num_samples):
     
     return dict_users, dominances
 
-def complex_skewness_cifar(dataset, num_users, num_samples, class_num=10):
+def uni_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     data_num = len(dataset)
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
@@ -227,96 +227,6 @@ def strong_skewness_cifar(dataset, num_users, num_samples, class_num=10):
         dict_users[i] = subset
         dominances.append(domi)
 
-    
-    return dict_users, dominances
-
-def nclass_client(heads,overalldist,idxs,counts,n=None,sampleNum=300,classNum=10):
-    if n is None:
-        draw = math.pow(random.uniform(0,1.0),4)
-        n = math.ceil(classNum*draw)
-
-    sortcounts = sorted(counts.items(),key=lambda x:x[1],reverse=False)
-
-    selectedClass = []
-    for i in range(n):
-        selectedClass.append(sortcounts[i][0])
-
-    dataPclass = math.floor(sampleNum/n)
-    remaining = sampleNum - dataPclass * n
-    remainingclass = np.random.choice(selectedClass,1)[0]
-
-    result = np.array([], dtype='int64')
-    for c in selectedClass:
-        if c == remainingclass:
-            result = add_data(result,idxs,heads,overalldist,c,remaining+dataPclass,counts)
-        else:
-            result = add_data(result,idxs,heads,overalldist,c,dataPclass,counts)
-    
-    return result, n
-
-def nclass_skewness_cifar(dataset, num_users=200, num_samples=250, class_num=10):
-    data_num = len(dataset)
-    idxs = np.arange(data_num)
-    labels = np.array(dataset.targets)
-    dict_users = {}
-
-    overalldist = [0] * class_num
-    for i in range(len(labels)):
-        overalldist[labels[i]] += 1
-    overalldist.insert(0,0)
-    for i in range(1,class_num+1):
-        overalldist[i] += overalldist[i-1]
-    heads = overalldist.copy()
-    del[heads[class_num]]
-
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
-    idxs = idxs_labels[0,:]
-
-    dominances = []
-    counts = {}
-    for i in range(class_num):
-        counts[i] = 0
-
-    for i in range(num_users):
-        subset, domi = nclass_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num)
-        dict_users[i] = subset
-        dominances.append(domi)
-
-    
-    return dict_users, dominances
-
-def nclass_skewness_mnist(dataset, num_users=200, num_samples=300, class_num=10):
-    data_num = len(dataset)
-    class_num = 10
-    idxs = np.arange(data_num)
-    labels = dataset.train_labels.numpy()
-    dict_users = {}
-
-    overalldist = [0] * class_num
-    for i in range(len(labels)):
-        overalldist[labels[i]] += 1
-    overalldist.insert(0,0)
-    for i in range(1,class_num+1):
-        overalldist[i] += overalldist[i-1]
-    heads = overalldist.copy()
-    del[heads[class_num]]
-
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
-    idxs = idxs_labels[0,:]
-
-    dominances = []
-    counts = {}
-    for i in range(class_num):
-        counts[i] = 0
-
-    for i in range(num_users):
-        subset, domi = nclass_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num)
-        dict_users[i] = subset
-        dominances.append(domi)
     
     return dict_users, dominances
 
