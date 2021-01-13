@@ -126,7 +126,7 @@ class SelfSparringBandit(Bandit):
         self.num_clients = args.num_users
         self.s = [0] * self.num_clients
         self.f = [0] * self.num_clients
-        self.lr = 0.2
+        self.lr = 1
         self.extension = args.extension
         self.historical_rounds = args.historical_rounds
         self.history = []

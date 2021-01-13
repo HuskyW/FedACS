@@ -156,6 +156,8 @@ if __name__ == '__main__':
     l2eval = np.ones((args.epochs-1,args.num_users))
     l2eval = l2eval*-1
 
+    removed = []
+
     if args.all_clients: 
         print("Aggregation over all clients")
         w_locals = [w_glob for i in range(args.num_users)]
@@ -193,12 +195,16 @@ if __name__ == '__main__':
         if FA_round(args,iter) is True:
             l2n = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(eva_locals))
             
-            if args.historical_rounds > 0:
+            if args.cut_thres > 0:
                 w_cutted = []
-                l2nThres = args.historical_rounds * np.mean(l2n)
+                l2nThres = args.cut_thres * np.mean(l2n)
+                removed = []
                 for i in range(len(l2n)):
                     if l2n[i] < l2nThres:
                         w_cutted.append(w_locals[i])
+                    else:
+                        killuser = idxs_users[i]
+                        removed.append(domirank[killuser])
                 w_locals = w_cutted
 
             rewards = {}
@@ -243,8 +249,8 @@ if __name__ == '__main__':
             print("Round {:3d}, Testing accuracy: {:.2f}".format(iter, acc_test))
             net_glob.train()
             print("Dominance ranking: " + str(domirankrecord))
-            if len(w_locals) < len(idxs_users):
-                print("%d clients are removed" % (len(idxs_users)-len(w_locals)))
+            if len(removed) > 0:
+                print("Removed: " + str(removed))
 
             testacc.append(float(acc_test))
 
