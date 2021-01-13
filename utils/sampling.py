@@ -274,7 +274,7 @@ def dirichlet_skewness_cifar(dataset, num_users, num_samples, class_num=10):
         counts[i] = 0
 
     for i in range(num_users):
-        subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=10)
+        subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=5)
         dict_users[i] = subset
 
     dominance = [0] * num_users

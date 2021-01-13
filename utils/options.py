@@ -18,7 +18,7 @@ def args_parser():
     parser.add_argument('--split', type=str, default='user', help="train-test split type, user or sample")
 
     # model arguments
-    parser.add_argument('--model', type=str, default='mlp', help='model name')
+    parser.add_argument('--model', type=str, default='cnn', help='model name')
     parser.add_argument('--kernel_num', type=int, default=9, help='number of each kind of kernel')
     parser.add_argument('--kernel_sizes', type=str, default='3,4,5',
                         help='comma-separated kernel size to use for convolution')
@@ -28,10 +28,10 @@ def args_parser():
                         help="Whether use max pooling rather than strided convolutions")
 
     # other arguments
-    parser.add_argument('--dataset', type=str, default='mnist', help="name of dataset")
-    parser.add_argument('--iid', type=int, default=4, help='0:iid, 1:nclass, 2:dominance, 3:strong dominance')
+    parser.add_argument('--dataset', type=str, default='cifar', help="name of dataset")
+    parser.add_argument('--iid', type=int, default=-1, help='0:iid, 1:nclass, 2:dominance, 3:pareto, 4:dirichlet')
     parser.add_argument('--num_classes', type=int, default=10, help="number of classes")
-    parser.add_argument('--num_channels', type=int, default=1, help="number of channels of imges")
+    parser.add_argument('--num_channels', type=int, default=3, help="number of channels of imges")
     parser.add_argument('--gpu', type=int, default=0, help="GPU ID, -1 for CPU")
     parser.add_argument('--stopping_rounds', type=int, default=10, help='rounds of early stopping')
     parser.add_argument('--verbose', action='store_true', help='verbose print')
@@ -42,8 +42,8 @@ def args_parser():
     parser.add_argument('--testing', type=int, default=1, help="test the model after some rounds, -1: never")
     parser.add_argument('--client_sel', type=int, default=0, help="Client selection, 0:random, 1:Sparring bandit, 2:MoveAvg bandit")
     parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")
-    parser.add_argument('--faf', type=int, default=-1, help="How offen FA round is used, -1:never, 0:always")
-    parser.add_argument('--lrd', type=float, default=0.993, help="Learning rate decay")
+    parser.add_argument('--faf', type=int, default=0, help="How offen FA round is used, -1:never, 0:always")
+    parser.add_argument('--lrd', type=float, default=0.9993, help="Learning rate decay")
     parser.add_argument('--extension', type=int, default=10, help="Candidate extension")
     parser.add_argument('--num_data', type=int, default=-1, help="Number of data in each client, -1:auto")
     parser.add_argument('--historical_rounds', type=int, default=0, help="How many rounds are remenbered by bandit for historical comparison? 0: never")
