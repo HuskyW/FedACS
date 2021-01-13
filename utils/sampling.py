@@ -277,7 +277,9 @@ def dirichlet_skewness_cifar(dataset, num_users, num_samples, class_num=10):
         subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=10)
         dict_users[i] = subset
 
-    return dict_users
+    dominance = [0] * num_users
+
+    return dict_users, dominance
 
 def spell_partition(partition, labels,dominence=None):
 
