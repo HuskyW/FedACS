@@ -222,7 +222,10 @@ def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
         counts[i] = 0
 
     for i in range(num_users):
-        dominance = math.pow(random.uniform(0,1.0),1/2)
+        sample = np.random.pareto(2)
+        while sample > 1 or sample < 0:
+            sample = np.random.pareto(2)
+        dominance = 1 - sample
         subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)
