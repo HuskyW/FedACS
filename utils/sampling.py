@@ -196,7 +196,7 @@ def uni_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     
     return dict_users, dominances
 
-def strong_skewness_cifar(dataset, num_users, num_samples, class_num=10):
+def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     data_num = len(dataset)
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
