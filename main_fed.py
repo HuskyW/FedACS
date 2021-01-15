@@ -152,6 +152,7 @@ if __name__ == '__main__':
     
     domilog = []
     rewardlog = []
+    hitmaplog = []
 
     l2eval = np.ones((args.epochs-1,args.num_users))
     l2eval = l2eval*-1
@@ -228,19 +229,21 @@ if __name__ == '__main__':
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
         net_glob.cuda()
-        
+
+        domirankrecord = []
+        for client in idxs_users:
+            domirankrecord.append(domirank[client])
+        domirankrecord.sort()
+
+        hitmaplog.append(domirankrecord)
+
+
         # Log domi
         if iter % args.testing == 0 and args.testing > 0:
             domi = []
             for client in idxs_users:
                 domi.append(dominance[client])
             domilog.append(float(sum(domi)/len(domi)))
-
-            domirankrecord = []
-            for client in idxs_users:
-                domirankrecord.append(domirank[client])
-            domirankrecord.sort()
-
 
             # test and log accuracy
             
@@ -292,6 +295,20 @@ if __name__ == '__main__':
             content = str(domilog[i]) + '\n'
             fp.write(content)
         print('dominance log written')
+
+    if args.log_idx < 0:
+        filepath = "./save/hitmap.xlsx"
+    else:
+        filepath = "./save/hitmap/"+logidx+'.xlsx'
+
+    np_hitmaplog = np.array(hitmaplog)
+    pd_hitmaplog = pd.DataFrame(np_hitmaplog)
+    writer = pd.ExcelWriter(filepath)
+    pd_hitmaplog.to_excel(writer,'sheet_1',float_format='%d')
+    writer.save()
+    writer.close()
+
+    print('hitmap record written')
 
     '''
     dominance = np.expand_dims(dominance,0)
