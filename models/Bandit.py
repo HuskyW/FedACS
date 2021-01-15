@@ -126,10 +126,13 @@ class SelfSparringBandit(Bandit):
         self.num_clients = args.num_users
         self.s = [0] * self.num_clients
         self.f = [0] * self.num_clients
-        self.lr = 1
         self.extension = args.extension
         self.historical_rounds = args.historical_rounds
         self.history = []
+        if self.historical_rounds > 0:
+            self.lr = float(1/self.historical_rounds)
+        else:
+            self.lr = 1
     
     def requireArms(self,num_picked):
         num_candidate = int(num_picked * self.extension)
