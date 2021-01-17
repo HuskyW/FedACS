@@ -40,14 +40,14 @@ class Rexp3Bandit(Bandit):
 
     def __init_batch(self):
         self.round_idx = 0
-        self.weights = np.ones((self.num_clients),dtype='int')
+        self.weights = np.ones((self.num_clients),dtype='float')
         return
 
     def __possibilities(self,reweight=False):
         if reweight == True:
             self.weights = self.weights * (self.num_clients / sum(self.weights))
         weights_sum = sum(self.weights)
-        possi = np.zeros((self.num_clients),dtype='int')
+        possi = np.zeros((self.num_clients),dtype='float')
         for i in range(self.num_clients):
             possi[i] = (1-self.gamma)*(self.weights[i]/weights_sum) + (self.gamma/self.num_clients)
         return possi
