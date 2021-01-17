@@ -120,7 +120,7 @@ if __name__ == '__main__':
     elif args.client_sel == 1:
         bandit = SelfSparringBandit(args)
     elif args.client_sel == 2:
-        bandit = MoveAvgBandit(args)
+        bandit = Rexp3Bandit(args)
     else:
         print("Bad Argument: client_sel")
         exit(-1)

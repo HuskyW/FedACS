@@ -13,9 +13,9 @@ class Bandit(metaclass=abc.ABCMeta):
         pass
 
 class Rexp3Bandit(Bandit):
-    def __init__(self,num_clients):
-        self.num_clients = num_clients
-        self.batch_size = 500
+    def __init__(self,args):
+        self.num_clients = args.num_users
+        self.batch_size = 250
         self.gamma = 0.2
         self.round_idx = 0
         self.clients = np.arange(self.num_clients,dtype='int')

@@ -40,7 +40,7 @@ def args_parser():
 
     # modified
     parser.add_argument('--testing', type=int, default=1, help="test the model after some rounds, -1: never")
-    parser.add_argument('--client_sel', type=int, default=0, help="Client selection, 0:random, 1:Sparring bandit, 2:MoveAvg bandit")
+    parser.add_argument('--client_sel', type=int, default=0, help="Client selection, 0:random, 1:Sparring bandit, 2:Rexp3 bandit")
     parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")
     parser.add_argument('--faf', type=int, default=0, help="How offen FA round is used, -1:never, 0:always")
     parser.add_argument('--lrd', type=float, default=0.9993, help="Learning rate decay")
