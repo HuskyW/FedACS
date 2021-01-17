@@ -18,7 +18,7 @@ def FedAvg(w):
     return w_avg
 
 def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=False,checking=None):
-    w_delta = DeltaWeights(w,w_old)
+    w_delta = DeltaWeights_cmfl(w,w_old)
     w_davg = FedAvg(w_delta)
     agreeThres = 0
     for k in w_davg.keys():
@@ -76,4 +76,11 @@ def DeltaWeights(w,w_old):
         for i in range(len(w)):
             deltas[i][k] = deltas[i][k].cpu().numpy().reshape(-1)
             deltas[i][k] -= w_old[k].cpu().numpy().reshape(-1)
+    return deltas
+
+def DeltaWeights_cmfl(w,w_old):
+    deltas = copy.deepcopy(w)
+    for k in w[0].keys():
+        for i in range(len(w)):
+            deltas[i][k] -= w_old[k]
     return deltas
