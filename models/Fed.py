@@ -17,7 +17,7 @@ def FedAvg(w):
         w_avg[k] = torch.div(w_avg[k], len(w))
     return w_avg
 
-def FedAvgWithCmfl(w,w_old,threshold=0.8,mute=False,checking=None):
+def FedAvgWithCmfl(w,w_old,threshold=0.7,mute=True,checking=None):
     w_delta = DeltaWeights_cmfl(w,w_old)
     w_davg = FedAvg(w_delta)
     agreeThres = 0

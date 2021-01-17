@@ -298,7 +298,7 @@ if __name__ == '__main__':
         for i in range(len(domilog)):
             content = str(domilog[i]) + '\n'
             fp.write(content)
-        print('dominance log written')
+        print('Dominance log written')
 
     if args.log_idx < 0:
         filepath = "./save/hitmap.xlsx"
@@ -312,7 +312,7 @@ if __name__ == '__main__':
     writer.save()
     writer.close()
 
-    print('hitmap record written')
+    print('Hitmap record written')
 
     '''
     dominance = np.expand_dims(dominance,0)
