@@ -17,7 +17,7 @@ from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_ske
 from utils.options import args_parser
 from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
-from models.Fed import FedAvg, FedAvgWithCmfl, FedAvgWithL2
+from models.Fed import FedAvg, FedAvgWithCmfl
 from models.test import test_img
 
 from utils.evaluate import l2NormEvaluate, FA_round
