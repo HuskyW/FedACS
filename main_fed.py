@@ -224,8 +224,12 @@ if __name__ == '__main__':
                 rewardlog.append(-1*numsamples*avgl2n)
 
         # update global weights
-        w_glob = FedAvg(w_locals)
+        if args.cmfl is False:
+            w_glob = FedAvg(w_locals)
+        else:
+            w_glob = FedAvgWithCmfl(w_locals,copy.deepcopy(w_old))
 
+        w_old = copy.deepcopy(w_glob)
         # copy weight to net_glob
         net_glob.load_state_dict(w_glob)
         net_glob.cuda()

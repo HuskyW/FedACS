@@ -48,6 +48,7 @@ def args_parser():
     parser.add_argument('--num_data', type=int, default=-1, help="Number of data in each client, -1:auto")
     parser.add_argument('--historical_rounds', type=int, default=0, help="How many rounds are remenbered by bandit for historical comparison? 0: never")
     parser.add_argument('--cut_thres', type=float, default=0, help="Threshold to remove bad updates, 0: never")
+    parser.add_argument('--cmfl', action='store_true', help='use CMFL')
 
     args = parser.parse_args()
     return args
