@@ -176,6 +176,73 @@ class SelfSparringBandit(Bandit):
                     self.f[i] += self.lr
         return
 
+class OortBandit(Bandit):
+    def __init__(self,args):
+        self.num_clients = args.num_users
+
+        self.clients = np.arange(self.num_clients,dtype='int')
+        self.uninitialized = [i for i in range(self.num_clients)]
+        self.lastinit = 0 # 0: initializing, 1: the last round for initialization, 2: working
+
+        self.u = [0] * self.num_clients
+        self.lastround = [1] * self.num_clients
+        self.round = 0
+
+        self.lamb = 0.2
+        self.clientpoolsize = int(self.num_clients*self.lamb)
+    
+    def requireArms(self,num_picked):
+        self.round += 1
+        # All required arms is uninitialized
+        if len(self.uninitialized) >= num_picked:
+            if len(self.uninitialized) == num_picked and self.lastinit == 0:
+                self.lastinit = 1
+            result = np.random.choice(self.uninitialized,num_picked,replace=False)
+            for i in result:
+                self.uninitialized.remove(i)
+            return result
+
+        if self.lastinit == 0:
+            self.lastinit = 1
+
+        # Part of arms is uninitialized
+        if len(self.uninitialized) > 0:
+            reserved = np.array(self.uninitialized,dtype='int')
+            num_left = num_picked - len(self.uninitialized)
+            self.uninitialized.clear()
+            temp = self.clients.copy()
+            for i in reserved:
+                temp = np.delete(temp, np.argwhere(temp == i))
+            newpicked = np.random.choice(temp,num_left,replace=False)
+            result = np.concatenate([reserved,newpicked])
+            return result
+
+        # All arms initialized
+        util = self.__util()
+        sortarms = sorted(util.items(),key=lambda x:x[1],reverse=True)
+        clientpool = np.zeros(self.clientpoolsize,dtype='int')
+        clientutil = np.zeros(self.clientpoolsize,dtype='float')
+        for i in range(self.clientpoolsize):
+            clientpool[i] = sortarms[i][0]
+            clientutil[i] = sortarms[i][1]
+        clientutil = clientutil / clientutil.sum()
+        draw = np.random.choice(clientpool,num_picked,p=clientutil,replace=False)
+        return draw
+
+    def updateWithRewards(self,loss):
+        for arm, reward in loss.items():
+            self.lastround[arm] = self.round
+            self.u[arm] = reward
+
+
+    def __util(self):
+        util = {}
+        for i in range(self.num_clients):
+            util[i] = self.u[i] + math.sqrt(0.1 * math.log(self.round) / self.lastround[i])
+        return util
+
+
+
 def tryBandit(bandit,iter,verbose=True):
     record = []
     for r in range(iter):
@@ -206,7 +273,7 @@ if __name__ == "__main__":
     args = argument()
     record1 = []
     for i in range(10):
-        bandit1 = SelfSparringBandit(args)
+        bandit1 = OortBandit(args)
         print("Try: %3d" % (i+1))
         record1.append(tryBandit(bandit1,500))
 
