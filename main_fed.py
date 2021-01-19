@@ -132,7 +132,10 @@ if __name__ == '__main__':
     domirank = {}
     for i in range(args.num_users):
         domiranktemp[i] = dominance[i]
-    DRTsort = sorted(domiranktemp.items(),key=lambda x:x[1],reverse=False)
+    if args.iid != 4:
+        DRTsort = sorted(domiranktemp.items(),key=lambda x:x[1],reverse=False)
+    else:
+        DRTsort = sorted(domiranktemp.items(),key=lambda x:x[1],reverse=True)
     for i in range(len(DRTsort)):
         domirank[DRTsort[i][0]] = i
 
