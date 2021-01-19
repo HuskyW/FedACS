@@ -22,7 +22,7 @@ from models.test import test_img
 
 from utils.evaluate import l2NormEvaluate, FA_round
 from models.Bound import estimateBounds
-from models.Bandit import SelfSparringBandit, Rexp3Bandit, MoveAvgBandit
+from models.Bandit import SelfSparringBandit, Rexp3Bandit, OortBandit
 from models.dla_simple import SimpleDLA
 
 
@@ -121,6 +121,8 @@ if __name__ == '__main__':
         bandit = SelfSparringBandit(args)
     elif args.client_sel == 2:
         bandit = Rexp3Bandit(args)
+    elif args.client_sel == 3:
+        bandit = OortBandit(args)
     else:
         print("Bad Argument: client_sel")
         exit(-1)
@@ -168,6 +170,7 @@ if __name__ == '__main__':
             w_locals = []
         m = max(int(args.frac * args.num_users), 1)
         eva_locals = []
+        loss_reward = {}
 
 
         # client selection
@@ -185,6 +188,7 @@ if __name__ == '__main__':
             else:
                 w_locals.append(copy.deepcopy(w))
             loss_locals.append(copy.deepcopy(loss))
+            loss_reward[idx] = loss
 
 
             if FA_round(args,iter) is True:
@@ -216,8 +220,10 @@ if __name__ == '__main__':
                 # write log
                 l2eval[iter-2][clientidx] = l2n[i]
             
-            if args.client_sel != 0:
+            if args.client_sel == 1 or args.client_sel == 2:
                 bandit.updateWithRewards(rewards)
+            if args.client_sel == 3:
+                bandit.updateWithRewards(loss_reward)
             
             if iter % args.testing == 0 and args.testing > 0:
                 avgl2n = sum(l2n)/len(l2n)
