@@ -235,7 +235,7 @@ def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
 
 
 def dirichlet_client(heads,overalldist,idxs,counts,sampleNum,classNum,alpha):
-    alphatemp = [alpha] * 10
+    alphatemp = [alpha] * classNum
     classdist = list(np.random.dirichlet(alpha=alphatemp))
     for i in range(len(classdist)):
         classdist[i] = int(classdist[i] * sampleNum)
@@ -276,7 +276,7 @@ def dirichlet_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     dominance = []
 
     for i in range(num_users):
-        domi = random.uniform(0,3.0)
+        domi = random.uniform(0,1.0)
         subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=domi)
         dict_users[i] = subset
         dominance.append(domi)
