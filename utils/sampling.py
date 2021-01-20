@@ -276,7 +276,10 @@ def dirichlet_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     dominance = []
 
     for i in range(num_users):
-        domi = random.uniform(0,1.0)
+        if i % 2 != 0:
+            domi = random.uniform(0,0.2)
+        else:
+            domi = random.uniform(0.2,3.0)
         subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=domi)
         dict_users[i] = subset
         dominance.append(domi)
@@ -325,7 +328,7 @@ if __name__ == '__main__':
     num = 200
     #d,domi = uni_skewness_cifar(dataset_train, num,num_samples=2000)
     #d = dirichlet_skewness_cifar(dataset_train, num,num_samples=2000)
-    d,domi = pareto_skewness_cifar(dataset_train, num,num_samples=2000)
+    d,domi = dirichlet_skewness_cifar(dataset_train, num,num_samples=2000)
     spell_partition(d,np.array(dataset_train.targets),domi)
     spell_data_usage(d,50000)
     
