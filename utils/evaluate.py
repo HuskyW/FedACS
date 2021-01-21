@@ -69,13 +69,7 @@ def FA_round(args,iter):
     if args.faf == 0:
         return True
     
-    initRounds = int(1/args.frac)
-    if iter <= 2*initRounds:
-        return True
-
-    stage = math.floor(iter/initRounds)
-    stage = math.floor(math.log2(stage))
-    
-    if iter % (stage*args.faf) == 0:
-        return True
+    if args.faf == 1:
+        if iter < 200:
+            return True
     return False
