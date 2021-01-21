@@ -277,7 +277,7 @@ def dirichlet_skewness_cifar(dataset, num_users, num_samples, class_num=10):
 
     for i in range(num_users):
         if i % 2 != 0:
-            domi = random.uniform(0,0.2)
+            domi = random.uniform(0.00001,0.2)
         else:
             domi = random.uniform(0.2,3.0)
         subset = dirichlet_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num,alpha=domi)
