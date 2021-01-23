@@ -9,11 +9,11 @@ rm -f ./templog/*
 time1=$(date)
 echo 'Start:' $time1
 
-for trial in {1..5..1}
+for trial in {6..15..1}
 do
 {
 echo "Trial $trial"
-python main_fed.py --epochs 1000 --local_ep 5 --local_bs 50 --iid 4 --testing 5  --client_sel 0 --num_data 250 --extension 4 --historical_rounds 5 --log_idx $trial #&> ./templog/$trial.log
+python main_fed.py --epochs 1000 --local_ep 5 --local_bs 400 --iid 2 --testing 5  --client_sel 1 --num_data 2000 --extension 4 --historical_rounds 5 --faf 1 --log_idx $trial #&> ./templog/$trial.log
 }&
 
 rem=$(($trial%5))

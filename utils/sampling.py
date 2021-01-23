@@ -196,7 +196,7 @@ def uni_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     
     return dict_users, dominances
 
-def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
+def inversepareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     data_num = len(dataset)
     idxs = np.arange(data_num)
     labels = np.array(dataset.targets)
@@ -226,6 +226,43 @@ def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
         while sample > 1 or sample < 0:
             sample = np.random.pareto(2)
         dominance = 1 - sample
+        subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance,classNum=class_num)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    
+    return dict_users, dominances
+
+def pareto_skewness_cifar(dataset, num_users, num_samples, class_num=10):
+    data_num = len(dataset)
+    idxs = np.arange(data_num)
+    labels = np.array(dataset.targets)
+    dict_users = {}
+
+    overalldist = [0] * class_num
+    for i in range(len(labels)):
+        overalldist[labels[i]] += 1
+    overalldist.insert(0,0)
+    for i in range(1,class_num+1):
+        overalldist[i] += overalldist[i-1]
+    heads = overalldist.copy()
+    del[heads[class_num]]
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    dominances = []
+    counts = {}
+    for i in range(class_num):
+        counts[i] = 0
+
+    for i in range(num_users):
+        sample = np.random.pareto(2)
+        while sample > 1 or sample < 0:
+            sample = np.random.pareto(2)
+        dominance = sample
         subset, domi = dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,dominance=dominance,classNum=class_num)
         dict_users[i] = subset
         dominances.append(domi)

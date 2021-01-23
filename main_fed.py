@@ -13,7 +13,7 @@ import torch
 import openpyxl
 import torchvision
 
-from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar, pareto_skewness_cifar, dirichlet_skewness_cifar
+from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar, pareto_skewness_cifar, dirichlet_skewness_cifar, inversepareto_skewness_cifar
 from utils.options import args_parser
 from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -53,12 +53,12 @@ if __name__ == '__main__':
         dataset_train = datasets.MNIST('../data/mnist/', train=True, download=True, transform=trans_mnist)
         dataset_test = datasets.MNIST('../data/mnist/', train=False, download=True, transform=trans_mnist)
         # sample users
-        if args.iid == 0:
+        if args.sampling == 'iid':
             dict_users,dominance = mnist_iid(dataset_train, args.num_users, numsamples)
-        elif args.iid == 2:
+        elif args.sampling == 'uniform':
             dict_users, dominance = complex_skewness_mnist(dataset_train, args.num_users, numsamples)
         else:
-            exit("Bad argument: iid")
+            exit("Bad argument: sampling")
     elif args.dataset == 'cifar':
         transform_train = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
@@ -73,18 +73,20 @@ if __name__ == '__main__':
         ])
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=transform_train)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=transform_test)
-        if args.iid == 0:
+        if args.sampling == 'iid':
             dict_users, dominance = cifar_iid(dataset_train, args.num_users, numsamples)
-        elif args.iid == 1:
+        elif args.sampling == 'nclass':
             print("Dont use this IID")
             exit(0)
             #dict_users, dominance = nclass_skewness_cifar(dataset_train, args.num_users, numsamples)
-        elif args.iid == 2:
+        elif args.sampling == 'uniform':
             dict_users, dominance = uni_skewness_cifar(dataset_train,args.num_users, numsamples)
-        elif args.iid == 3:
-            dict_users, dominance = pareto_skewness_cifar(dataset_train,args.num_users, numsamples)
-        elif args.iid == 4:
+        elif args.sampling == 'ipareto':
+            dict_users, dominance = inversepareto_skewness_cifar(dataset_train,args.num_users, numsamples)
+        elif args.sampling == 'dirichlet':
             dict_users, dominance = dirichlet_skewness_cifar(dataset_train,args.num_users, numsamples)
+        elif args.sampling == 'pareto':
+            dict_users, dominance = pareto_skewness_cifar(dataset_train,args.num_users, numsamples)
         else:
             exit("Bad argument: iid")
     else:
@@ -132,7 +134,7 @@ if __name__ == '__main__':
     domirank = {}
     for i in range(args.num_users):
         domiranktemp[i] = dominance[i]
-    if args.iid != 4:
+    if args.sampling != 'dirichlet':
         DRTsort = sorted(domiranktemp.items(),key=lambda x:x[1],reverse=False)
     else:
         DRTsort = sorted(domiranktemp.items(),key=lambda x:x[1],reverse=True)
