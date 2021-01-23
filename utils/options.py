@@ -29,7 +29,6 @@ def args_parser():
 
     # other arguments
     parser.add_argument('--dataset', type=str, default='cifar', help="name of dataset")
-    parser.add_argument('--sampling', type=str, default='iid', help='iid, uniform, pareto, ipareto, dirichlet')
     parser.add_argument('--num_classes', type=int, default=10, help="number of classes")
     parser.add_argument('--num_channels', type=int, default=3, help="number of channels of imges")
     parser.add_argument('--gpu', type=int, default=0, help="GPU ID, -1 for CPU")
@@ -39,8 +38,9 @@ def args_parser():
     parser.add_argument('--all_clients', action='store_true', help='aggregation over all clients')
 
     # modified
+    parser.add_argument('--sampling', type=str, default='iid', help='iid || uniform || pareto || ipareto || dirichlet')
     parser.add_argument('--testing', type=int, default=1, help="test the model after some rounds, -1: never")
-    parser.add_argument('--client_sel', type=int, default=0, help="Client selection, 0:random, 1:Sparring bandit, 2:Rexp3 bandit, 3:Oort bandit")
+    parser.add_argument('--client_sel', type=str, default='random', help="Client selection, random || fedacs || rexp3 || oort")
     parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")
     parser.add_argument('--faf', type=int, default=0, help="How offen FA round is used, -1:never, 0:always, 1:early stop")
     parser.add_argument('--lrd', type=float, default=0.9993, help="Learning rate decay")

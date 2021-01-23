@@ -117,13 +117,13 @@ if __name__ == '__main__':
     net_glob.train()
 
     # client selection scheme
-    if args.client_sel == 0:
+    if args.client_sel == 'random':
         pass
-    elif args.client_sel == 1:
+    elif args.client_sel == 'fedacs':
         bandit = SelfSparringBandit(args)
-    elif args.client_sel == 2:
+    elif args.client_sel == 'rexp3':
         bandit = Rexp3Bandit(args)
-    elif args.client_sel == 3:
+    elif args.client_sel == 'oort':
         bandit = OortBandit(args)
     else:
         print("Bad Argument: client_sel")
@@ -179,7 +179,7 @@ if __name__ == '__main__':
 
 
         # client selection
-        if args.client_sel != 0:
+        if args.client_sel != 'random':
             idxs_users = bandit.requireArms(m)
         else:
             idxs_users = np.random.choice(range(args.num_users), m, replace=False)
@@ -225,9 +225,9 @@ if __name__ == '__main__':
                 # write log
                 l2eval[iter-2][clientidx] = l2n[i]
             
-            if args.client_sel == 1 or args.client_sel == 2:
+            if args.client_sel == 'fedacs' or args.client_sel == 'rexp3':
                 bandit.updateWithRewards(rewards)
-            if args.client_sel == 3:
+            if args.client_sel == 'oort':
                 bandit.updateWithRewards(loss_reward)
             
             if iter % args.testing == 0 and args.testing > 0:
