@@ -173,7 +173,10 @@ if __name__ == '__main__':
         loss_locals = []
         if not args.all_clients:
             w_locals = []
-        m = max(int(args.frac * args.num_users), 1)
+        if args.frac > 1:
+            m = int(args.frac)
+        else:
+            m = max(int(args.frac * args.num_users), 1)
         eva_locals = []
         loss_reward = {}
 
