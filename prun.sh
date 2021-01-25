@@ -13,7 +13,7 @@ for trial in {1..5..1}
 do
 {
 echo "Trial $trial"
-python main_fed.py --epochs 1000 --local_ep 5 --local_bs 400 --sampling uniform --testing 5  --client_sel oort --num_data 2000 --extension 4 --historical_rounds 5 --log_idx $trial #&> ./templog/$trial.log
+python main_fed.py --epochs 1000 --local_ep 5 --local_bs 10 --sampling uniform --testing 5  --client_sel oort --num_data 50 --extension 4 --historical_rounds 5 --log_idx $trial #&> ./templog/$trial.log
 }&
 
 rem=$(($trial%5))

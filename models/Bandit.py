@@ -196,6 +196,11 @@ class OortBandit(Bandit):
     
     def requireArms(self,num_picked):
         self.round += 1
+
+        if num_picked > self.num_clients:
+            print('Too much clients picked')
+            exit(0)
+
         # All required arms is uninitialized
         if len(self.uninitialized) >= num_picked:
             if len(self.uninitialized) == num_picked and self.lastinit == 0:
@@ -221,11 +226,12 @@ class OortBandit(Bandit):
             return result
 
         # All arms initialized
+        clientpoolsize = max(self.clientpoolsize,num_picked)
         util = self.__util()
         sortarms = sorted(util.items(),key=lambda x:x[1],reverse=True)
-        clientpool = np.zeros(self.clientpoolsize,dtype='int')
-        clientutil = np.zeros(self.clientpoolsize,dtype='float')
-        for i in range(self.clientpoolsize):
+        clientpool = np.zeros(clientpoolsize,dtype='int')
+        clientutil = np.zeros(clientpoolsize,dtype='float')
+        for i in range(clientpoolsize):
             clientpool[i] = sortarms[i][0]
             clientutil[i] = sortarms[i][1]
         clientutil = clientutil / clientutil.sum()
@@ -237,9 +243,8 @@ class OortBandit(Bandit):
             self.lastround[arm] = self.round
             self.u[arm] = reward
             self.participation[arm] += 1
-            if self.participation[arm] >= 100 and arm in self.available_clients:
+            if self.participation[arm] >= self.maxparticipation and arm in self.available_clients and len(self.available_clients) > 10:
                 self.available_clients.remove(arm)
-
 
     def __util(self):
         util = {}
