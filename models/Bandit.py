@@ -183,6 +183,8 @@ class OortBandit(Bandit):
         self.clients = np.arange(self.num_clients,dtype='int')
         self.uninitialized = [i for i in range(self.num_clients)]
         self.lastinit = 0 # 0: initializing, 1: the last round for initialization, 2: working
+        self.participation = [0] * self.num_clients
+        self.available_clients = set([i for i in range(self.num_clients)])
 
         self.u = [0] * self.num_clients
         self.lastround = [1] * self.num_clients
@@ -190,6 +192,7 @@ class OortBandit(Bandit):
 
         self.lamb = 0.2
         self.clientpoolsize = int(self.num_clients*self.lamb)
+        self.maxparticipation = 100
     
     def requireArms(self,num_picked):
         self.round += 1
@@ -233,11 +236,14 @@ class OortBandit(Bandit):
         for arm, reward in loss.items():
             self.lastround[arm] = self.round
             self.u[arm] = reward
+            self.participation[arm] += 1
+            if self.participation[arm] >= 100 and arm in self.available_clients:
+                self.available_clients.remove(arm)
 
 
     def __util(self):
         util = {}
-        for i in range(self.num_clients):
+        for i in self.available_clients:
             util[i] = self.u[i] + math.sqrt(0.1 * math.log(self.round) / self.lastround[i])
         return util
 
