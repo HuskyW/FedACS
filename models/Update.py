@@ -81,5 +81,11 @@ class SingleBgdUpdate(object):
             loss = self.loss_func(log_probs, labels)
             loss.backward()
             optimizer.step()
-        return net.state_dict()
+        if self.args.light_analytics is False:
+            return net.state_dict()
+        lightDict = {}
+        lightDict['fc3.weight'] = net.state_dict()['fc3.weight']
+        lightDict['fc3.bias'] = net.state_dict()['fc3.bias']
+        return lightDict
+
 

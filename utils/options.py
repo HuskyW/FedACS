@@ -49,6 +49,7 @@ def args_parser():
     parser.add_argument('--historical_rounds', type=int, default=0, help="How many rounds are remenbered by bandit for historical comparison? 0: never")
     parser.add_argument('--cut_thres', type=float, default=0, help="Threshold to remove bad updates, 0: never")
     parser.add_argument('--cmfl', action='store_true', help='use CMFL')
+    parser.add_argument('--light_analytics', action='store_true', help='infer the skewness only based on the last layer')
 
     args = parser.parse_args()
     return args
