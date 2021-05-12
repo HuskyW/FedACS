@@ -209,6 +209,7 @@ if __name__ == '__main__':
         # Evaluate L2 norm and update rewards
         if FA_round(args,iter) is True:
             l2n = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(eva_locals))
+            l2n = np.array(l2n) * math.sqrt(numsamples) * -1
             
             if args.cut_thres > 0:
                 w_cutted = []
@@ -225,7 +226,7 @@ if __name__ == '__main__':
             rewards = {}
             for i in range(len(l2n)):
                 clientidx = idxs_users[i]
-                rewards[clientidx] = l2n[i] * -1 * numsamples
+                rewards[clientidx] = l2n[i]
 
                 # write log
                 l2eval[iter-2][clientidx] = l2n[i]
@@ -237,6 +238,7 @@ if __name__ == '__main__':
                     obs = ob.train(net=copy.deepcopy(net_glob).to(args.device))
                     w_observe.append(copy.deepcopy(obs))
                 l2_observe = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(w_observe),replace_avg=FedAvg(eva_locals))
+                l2_observe = np.array(l2_observe) * math.sqrt(numsamples) * -1
                 for i in range(len(l2_observe)):
                     l2eval[iter-2][i] = l2_observe[i]
                 
