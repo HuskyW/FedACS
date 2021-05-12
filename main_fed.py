@@ -13,7 +13,7 @@ import torch
 import openpyxl
 import torchvision
 
-from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar, pareto_skewness_cifar, dirichlet_skewness_cifar, inversepareto_skewness_cifar
+from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar, pareto_skewness_cifar, dirichlet_skewness_cifar, inversepareto_skewness_cifar, staged_skewness_cifar
 from utils.options import args_parser
 from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -87,6 +87,8 @@ if __name__ == '__main__':
             dict_users, dominance = dirichlet_skewness_cifar(dataset_train,args.num_users, numsamples)
         elif args.sampling == 'pareto':
             dict_users, dominance = pareto_skewness_cifar(dataset_train,args.num_users, numsamples)
+        elif args.sampling == 'staged':
+            dict_users, dominance = staged_skewness_cifar(dataset_train,args.num_users, numsamples)
         else:
             exit("Bad argument: iid")
     else:
@@ -227,6 +229,18 @@ if __name__ == '__main__':
 
                 # write log
                 l2eval[iter-2][clientidx] = l2n[i]
+
+            if args.sampling == 'staged':
+                w_observe = []
+                for i in range(60):
+                    ob = SingleBgdUpdate(args=args, dataset=dataset_train, idxs=dict_users[i])
+                    obs = ob.train(net=copy.deepcopy(net_glob).to(args.device))
+                    w_observe.append(copy.deepcopy(obs))
+                l2_observe = l2NormEvaluate(copy.deepcopy(w_old),copy.deepcopy(w_observe),replace_avg=FedAvg(eva_locals))
+                for i in range(len(l2_observe)):
+                    l2eval[iter-2][i] = l2_observe[i]
+                
+
             
             if args.client_sel == 'fedacs' or args.client_sel == 'rexp3':
                 bandit.updateWithRewards(rewards)
@@ -328,13 +342,13 @@ if __name__ == '__main__':
 
     print('Hitmap record written')
 
-    '''
-    dominance = np.expand_dims(dominance,0)
-    l2eval = np.concatenate((dominance,l2eval),axis=0)
-    writer = pd.ExcelWriter('l2eval.xlsx')
-    l2pandas = pd.DataFrame(l2eval)
-    l2pandas.to_excel(writer, 'sheet_1', float_format='%f')
-    writer.save()
-    writer.close()
-    print('L2 record written')
-    '''
+    if args.sampling == 'staged':
+        dominance = np.expand_dims(dominance,0)
+        l2eval = np.concatenate((dominance,l2eval),axis=0)
+        writer = pd.ExcelWriter('l2eval.xlsx')
+        l2pandas = pd.DataFrame(l2eval)
+        l2pandas.to_excel(writer, 'sheet_1', float_format='%f')
+        writer.save()
+        writer.close()
+        print('L2 record written')
+    
