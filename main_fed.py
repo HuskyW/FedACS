@@ -252,7 +252,7 @@ if __name__ == '__main__':
             
             if iter % args.testing == 0 and args.testing > 0:
                 avgl2n = sum(l2n)/len(l2n)
-                rewardlog.append(-1*numsamples*avgl2n)
+                rewardlog.append(avgl2n)
 
         # update global weights
         if args.cmfl is False:
