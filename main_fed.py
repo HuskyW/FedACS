@@ -14,7 +14,7 @@ import openpyxl
 import torchvision
 import math
 
-from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar, pareto_skewness_cifar, dirichlet_skewness_cifar, inversepareto_skewness_cifar, staged_skewness_cifar
+from utils.sampling import mnist_iid, cifar_iid, complex_skewness_mnist, uni_skewness_cifar, pareto_skewness_cifar, dirichlet_skewness_cifar, inversepareto_skewness_cifar, staged_skewness_cifar, fewclass_uni_skewness_cifar
 from utils.options import args_parser
 from models.Update import LocalUpdate, SingleBgdUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
@@ -90,6 +90,8 @@ if __name__ == '__main__':
             dict_users, dominance = pareto_skewness_cifar(dataset_train,args.num_users, numsamples)
         elif args.sampling == 'staged':
             dict_users, dominance = staged_skewness_cifar(dataset_train,args.num_users, numsamples)
+        elif args.sampling == 'fewclass':
+            dict_users, dominance = fewclass_uni_skewness_cifar(dataset_train,args.num_users, numsamples)
         else:
             exit("Bad argument: iid")
     else:

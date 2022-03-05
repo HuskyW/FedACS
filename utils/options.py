@@ -38,7 +38,7 @@ def args_parser():
     parser.add_argument('--all_clients', action='store_true', help='aggregation over all clients')
 
     # modified
-    parser.add_argument('--sampling', type=str, default='iid', help='iid || uniform || pareto || ipareto || dirichlet || staged')
+    parser.add_argument('--sampling', type=str, default='iid', help='iid || uniform || pareto || ipareto || dirichlet || staged || fewclass')
     parser.add_argument('--testing', type=int, default=1, help="test the model after some rounds, -1: never")
     parser.add_argument('--client_sel', type=str, default='random', help="Client selection, random || fedacs || rexp3 || oort")
     parser.add_argument('--log_idx', type=int, default=-1, help="Index of log file")

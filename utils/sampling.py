@@ -196,6 +196,64 @@ def uni_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     
     return dict_users, dominances
 
+def fewclass_dominance_client(heads,overalldist,idxs,counts,sampleNum,classNum,dominance=None,dClass=None):
+    localClassNum = random.randint(1,10)
+    localClass = np.random.choice(10,size=localClassNum,replace=False)
+    if dominance is None:
+        dominance = random.uniform(0,1.0)
+    if dClass is None:
+        sortcounts = sorted(counts.items(),key=lambda x:x[1],reverse=False)
+        for i in range(classNum):
+            dClassCandidate = sortcounts[i][0]
+            if dClassCandidate in localClass:
+                dClass = dClassCandidate
+                break
+
+    dominance = float(dominance)
+    
+    iidClassSize = math.floor(sampleNum *(1 - dominance) / localClassNum)
+    nonClassSize = sampleNum - localClassNum * iidClassSize
+    result = np.array([], dtype='int64')
+    result = add_data(result,idxs,heads,overalldist,dClass,nonClassSize,counts)
+
+    for i in localClass:
+        result = add_data(result,idxs,heads,overalldist,i,iidClassSize,counts)
+    
+    return result, dominance - localClassNum
+
+def fewclass_uni_skewness_cifar(dataset, num_users, num_samples, class_num=10):
+    data_num = len(dataset)
+    idxs = np.arange(data_num)
+    labels = np.array(dataset.targets)
+    dict_users = {}
+
+    overalldist = [0] * class_num
+    for i in range(len(labels)):
+        overalldist[labels[i]] += 1
+    overalldist.insert(0,0)
+    for i in range(1,class_num+1):
+        overalldist[i] += overalldist[i-1]
+    heads = overalldist.copy()
+    del[heads[class_num]]
+
+    # sort labels
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:,idxs_labels[1,:].argsort()]
+    idxs = idxs_labels[0,:]
+
+    dominances = []
+    counts = {}
+    for i in range(class_num):
+        counts[i] = 0
+
+    for i in range(num_users):
+        subset, domi = fewclass_dominance_client(heads,overalldist,idxs,counts,sampleNum=num_samples,classNum=class_num)
+        dict_users[i] = subset
+        dominances.append(domi)
+
+    
+    return dict_users, dominances
+
 def staged_skewness_cifar(dataset, num_users, num_samples, class_num=10):
     data_num = len(dataset)
     idxs = np.arange(data_num)
